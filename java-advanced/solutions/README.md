@@ -1,5 +1,5 @@
 # Advanced Java
-- You can read homeworks here [Условия домашних заданий](Homeworks.pdf)
+- [Hometasks](Homeworks.pdf)
 
 # Topics Covered
 ***Introduction***
