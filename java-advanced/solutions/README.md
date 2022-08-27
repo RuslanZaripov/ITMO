@@ -2,7 +2,7 @@
 - You can read homeworks here [Условия домашних заданий](Homeworks.pdf)
 
 # Topics Covered
-***First Part***
+***Introduction***
 1. I/O
 2. Collections Framework
 3. Lambda Expressions and Streams
@@ -11,3 +11,8 @@
 6. Javadoc
 7. Modules
 8. Garbage collection
+
+***Multithreaded programming***
+1. Introduction to Multithreaded Programming
+2. Tasks and means of multithreaded programming
+3. Multithreaded Java Programming
