@@ -1,5 +1,5 @@
 # Advanced Java
-- [Hometasks](Homeworks.pdf)
+- You can read course tasks [here](Homeworks.pdf) or from [actual source](https://www.kgeorgiy.info:4443/courses/java-advanced/homeworks.html).
 
 # Topics Covered
 ***Introduction***
