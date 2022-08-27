@@ -1,2 +1,2 @@
 # Advanced Java
-Условия домашних заданий [ссылка](Homeworks.pdf)
+Условия домашних заданий [](Homeworks.pdf)
