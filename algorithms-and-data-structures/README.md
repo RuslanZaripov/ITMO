@@ -1,5 +1,7 @@
 # Алгоритмы и структуры данных
 
+[Задачи](https://codeforces.com/group/IcRBR8epox/contests)
+
 <семестр>-<лабораторная>. <тема>
 
 3-1. [DFS, MST](sem3-lab1)
