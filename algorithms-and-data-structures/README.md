@@ -1,6 +1,6 @@
 # Алгоритмы и структуры данных
 
-[Задачи](https://codeforces.com/group/IcRBR8epox/contests)
+[Лабораторные](https://codeforces.com/group/IcRBR8epox/contests)
 
 <семестр>-<лабораторная>. <тема>
 
