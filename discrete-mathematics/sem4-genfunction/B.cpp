@@ -229,9 +229,6 @@ void calculate_pow_A(const Polynomial& A, const int precision) {
 }
 
 int main(int argc, char* argv[]) {
-    std::string path = R"(C:\Users\rusla\Desktop\fourth-sem\discret-math\gen-func-2\B\output1-test)" + std::string(argv[1]) + ".txt";
-    std::freopen(path.c_str(), "w", stdout);
-
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
