@@ -1,0 +1,41 @@
+2
+
+S ( _ -> S _ > ( >
+S 0 _ -> S _ > 0 >
+S 1 _ -> S _ > 1 >
+S o _ -> S _ > o >
+S ) _ -> process _ ^ _ <
+S a _ -> and _ > _ <
+
+S _ _ -> process _ ^ _ <
+
+and ( 1 -> addAnd ( ^ 1 >
+and ( 0 -> addAnd ( ^ 0 >
+
+addAnd ( _ -> S _ > a >
+
+and 1 1 -> S _ > 1 >
+and 1 0 -> S _ > 0 >
+and 0 1 -> S _ > 0 >
+and 0 0 -> S _ > 0 >
+
+process _ _ -> AC 0 ^ _ ^
+process _ o -> process _ ^ _ <
+process _ 0 -> process _ ^ _ <
+process _ ( -> S _ > 0 >
+process _ a -> andZero _ ^ _ <
+
+andZero _ 0 -> S _ > 0 >
+andZero _ 1 -> S _ > 0 >
+
+process _ 1 -> findOne _ ^ _ <
+
+findOne _ _ -> AC 1 ^ _ ^
+findOne _ 1 -> findOne _ ^ _ <
+findOne _ 0 -> findOne _ ^ _ <
+findOne _ o -> findOne _ ^ _ <
+findOne _ ( -> S _ > 1 >
+findOne _ a -> andOne _ ^ _ <
+
+andOne _ 0 -> S _ > 0 >
+andOne _ 1 -> S _ > 1 >

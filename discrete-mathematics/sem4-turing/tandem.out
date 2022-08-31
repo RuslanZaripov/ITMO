@@ -1,0 +1,55 @@
+start: changeStart
+accept: ac
+reject: rj
+blank: _
+
+changeStart 1 -> end o >
+changeStart 0 -> end z >
+
+end 1 -> end 1 >
+end 0 -> end 0 >
+end _ -> changeEnd _ <
+end z -> changeEnd z <
+end o -> changeEnd o <
+
+changeEnd 1 -> start o <
+changeEnd 0 -> start z <
+changeEnd z -> rj | ^
+changeEnd o -> rj | ^
+
+changeStart z -> moveZero ! <  
+changeStart o -> moveOne ! < 
+
+start o -> changeStart o >
+start z -> changeStart z >
+start 1 -> start 1 <
+start 0 -> start 0 <
+
+moveZero o -> moveZero o <
+moveZero z -> moveZero z <
+moveZero ! -> moveZero - <
+moveZero - -> moveZero - <
+moveZero _ -> checkZero _ >
+moveZero + -> checkZero + >
+
+moveOne o -> moveOne o <
+moveOne z -> moveOne z <
+moveOne ! -> moveOne - <
+moveOne - -> moveOne - <
+moveOne _ -> checkOne _ >
+moveOne + -> checkOne + >
+
+checkZero z -> moveToSign + >
+checkZero o -> rj | ^
+
+checkOne z -> rj | ^
+checkOne o -> moveToSign + >
+
+moveToSign o -> moveToSign o >
+moveToSign z -> moveToSign z >
+moveToSign - -> moveToSign - >
+moveToSign ! -> symbol ! >
+
+symbol z -> moveZero ! <
+symbol o -> moveOne ! <
+symbol _ -> ac _ ^

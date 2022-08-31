@@ -1,0 +1,46 @@
+start: skipNumber
+accept: ac
+reject: rj
+blank: _
+
+skipNumber 0 -> skipNumber 0 <
+skipNumber 1 -> skipNumber 1 <
+skipNumber 2 -> skipNumber 2 <
+
+skipNumber _ -> addZero | <
+
+addZero _ -> end 0 ^
+
+end 0 -> end 0 >
+end 1 -> end 1 >
+end 2 -> end 2 >
+end | -> end | >
+end _ -> subtractOneFromRight _ <
+
+subtractOneFromRight 2 -> skipToLeft 1 <
+subtractOneFromRight 1 -> skipToLeft 0 <
+subtractOneFromRight 0 -> subtractOneFromRight 2 <
+subtractOneFromRight | -> clean | ^
+
+skipToLeft 0 -> skipToLeft 0 <
+skipToLeft 1 -> skipToLeft 1 <
+skipToLeft 2 -> skipToLeft 2 <
+skipToLeft | -> addToLeft | <
+
+addToLeft _ -> end 1 ^
+addToLeft 0 -> end 1 ^
+addToLeft 1 -> addToLeft 0 <
+
+clean | -> clean _ >
+clean 0 -> clean _ >
+clean 1 -> clean _ >
+clean 2 -> clean _ >
+clean _ -> isNumber _ ^
+
+isNumber _ -> isNumber _ <
+isNumber 0 -> toStart 0 ^
+isNumber 1 -> toStart 1 ^
+
+toStart 0 -> toStart 0 <
+toStart 1 -> toStart 1 <
+toStart _ -> ac _ >

@@ -1,0 +1,56 @@
+start: changeSymbolAndGoRight
+accept: ac
+reject: rj
+blank: _
+
+changeSymbolAndGoRight 1 -> skipSymbolsRight o >
+changeSymbolAndGoRight 0 -> skipSymbolsRight z >
+changeSymbolAndGoRight < -> check < >
+
+skipSymbolsRight 0 -> skipSymbolsRight 0 >
+skipSymbolsRight 1 -> skipSymbolsRight 1 >
+skipSymbolsRight < -> skipSymbolsRight < >
+skipSymbolsRight _ -> changeSymbolAndGoLeft _ <
+skipSymbolsRight o -> changeSymbolAndGoLeft o <
+skipSymbolsRight z -> changeSymbolAndGoLeft z <
+
+changeSymbolAndGoLeft 1 -> skipSymbolsLeft o <
+changeSymbolAndGoLeft 0 -> skipSymbolsLeft z <
+changeSymbolAndGoLeft < -> rj < ^
+
+skipSymbolsLeft 0 -> skipSymbolsLeft 0 <
+skipSymbolsLeft 1 -> skipSymbolsLeft 1 <
+skipSymbolsLeft < -> skipSymbolsLeft < <
+skipSymbolsLeft _ -> changeSymbolAndGoRight _ >
+skipSymbolsLeft o -> changeSymbolAndGoRight o >
+skipSymbolsLeft z -> changeSymbolAndGoRight z >
+
+check 1 -> ac 1 ^
+check o -> checkOne1 <' <
+check z -> checkZero1 <' <
+check _ -> rj _ ^
+
+checkOne1 < -> checkOne1 < <
+checkOne1 0 -> checkOne1 0 <
+checkOne1 1 -> checkOne1 1 <
+checkOne1 o -> checkOne1 o <
+checkOne1 z -> checkOne1 z <
+checkOne1 _ -> checkOne2 _ >
+
+checkOne2 o -> skip _ >
+checkOne2 z -> ac _ ^
+
+checkZero1 < -> checkZero1 < <
+checkZero1 0 -> checkZero1 0 <
+checkZero1 1 -> checkZero1 1 <
+checkZero1 o -> checkZero1 o <
+checkZero1 z -> checkZero1 z <
+checkZero1 _ -> checkZero2 _ >
+
+checkZero2 o -> rj _ ^
+checkZero2 z -> skip _ >
+
+skip o -> skip o >
+skip z -> skip z >
+skip < -> skip < >
+skip <' -> check < >

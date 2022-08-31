@@ -1,0 +1,18 @@
+start: close
+accept: ac
+reject: rj
+blank: _
+
+close . -> close . >
+close ( -> close ( >
+close ) -> open . <
+close _ -> check _ <
+
+open . -> open . <
+open ) -> open ) <
+open ( -> close . >
+open _ -> rj _ ^
+
+check . -> check . <
+check ( -> rj ( ^
+check _ -> ac _ ^

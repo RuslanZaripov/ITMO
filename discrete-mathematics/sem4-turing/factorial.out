@@ -1,0 +1,214 @@
+start: s
+accept: ac
+reject: rj
+blank: _
+
+s 1 -> placeMulSign 1 <
+placeMulSign _ -> placeOneToMul * <
+placeOneToMul _ -> finishMul 1 ^
+
+finishMul 1 -> finishMul 1 >
+finishMul * -> moveToCopy * >
+
+moveToCopy 0 -> moveToCopy 0 >
+moveToCopy 1 -> moveToCopy 1 >
+moveToCopy _ -> copyToStart | <
+
+copyToStart 0 -> copyToStart 0 <
+copyToStart 1 -> copyToStart 1 <
+copyToStart * -> copy * >
+
+copy 1 -> copyOne 1' >
+copy 0 -> copyZero 0' >
+copy | -> changeNotation | >
+
+changeNotation o -> changeNotation 1 >
+changeNotation z -> changeNotation 0 >
+changeNotation 1 -> changeNotation 1 >
+changeNotation 0 -> changeNotation 0 >
+changeNotation _ -> toStartAfterCopy _ <
+
+copyOne 0 -> copyOne 0 >
+copyOne 1 -> copyOne 1 >
+copyOne | -> copyOne | >
+copyOne o -> copyOne 1 >
+copyOne z -> copyOne 0 >
+copyOne _ -> copyToSign o <
+
+copyZero 0 -> copyZero 0 >
+copyZero 1 -> copyZero 1 >
+copyZero | -> copyZero | >
+copyZero o -> copyZero 1 >
+copyZero z -> copyZero 0 >
+copyZero _ -> copyToSign z <
+
+copyToSign | -> copyToSign | <
+copyToSign 0 -> copyToSign 0 <
+copyToSign 1 -> copyToSign 1 <
+copyToSign 1' -> copy 1 >
+copyToSign 0' -> copy 0 >
+
+toStartAfterCopy 0 -> toStartAfterCopy 0 <
+toStartAfterCopy 1 -> toStartAfterCopy 1 <
+toStartAfterCopy | -> toStartAfterCopy | <
+toStartAfterCopy * -> toStartAfterCopy * <
+toStartAfterCopy _ -> mulDel _ >
+
+mulDel 0 -> mulDel 0 <
+mulDel 1 -> mulDel 1 <
+mulDel _ -> placeZero = <
+
+placeZero _ -> mulS 0 >
+
+mulS = -> mulS = >
+mulS 0 -> mulS 0 > 
+mulS 1 -> mulS 1 >
+mulS * -> mulS * >
+mulS | -> decrement | <
+
+decrement 1 -> process 0 ^
+decrement 0 -> decrement 1 <
+decrement * -> toEnd * >
+
+toEnd 1 -> toEnd 1 >
+toEnd | -> cleanUntilMul | <
+
+cleanUntilMul 1 -> cleanUntilMul $ <
+cleanUntilMul * -> cleanUntilSign * <
+
+cleanUntilSign 1 -> cleanUntilSign * <
+cleanUntilSign 0 -> cleanUntilSign * <
+cleanUntilSign * -> cleanUntilSign * <
+cleanUntilSign = -> finish * <
+
+finish 0 -> finish 0 <
+finish 1 -> finish 1 <
+finish _ -> prepareToDecrement _ >
+
+process 0 -> process 0 <
+process 1 -> process 1 <
+process * -> add * <
+
+add * -> add * <
+add 1 -> skipOne 1' <
+add 0 -> skipZero 0' <
+add = -> mulToStart = <
+
+skipOne 0 -> skipOne 0 <
+skipOne 1 -> skipOne 1 <
+skipOne = -> addOne = <
+
+skipZero 0 -> skipZero 0 <
+skipZero 1 -> skipZero 1 <
+skipZero = -> addZero = <
+
+addOne 1 -> addition 0* <
+addOne 0 -> back 1* ^ 
+addOne 1* -> addOne 1* <
+addOne 0* -> addOne 0* <
+addOne _ -> back 1* ^
+
+addZero _ -> back 0* ^
+addZero 1* -> addZero 1* <
+addZero 0* -> addZero 0* <
+addZero 0 -> back 0* ^
+addZero 1 -> back 1* ^
+
+addition 0 -> back 1 ^
+addition 1 -> addition 0 <
+addition _ -> back 1 ^
+
+back 0 -> back 0 >
+back 1 -> back 1 >
+back = -> back = >
+back 1* -> back 1* >
+back 0* -> back 0* >
+back 1' -> add 1' <
+back 0' -> add 0' <
+
+mulToStart 1* -> mulToStart 1* <
+mulToStart 0* -> mulToStart 0* <
+mulToStart 1 -> mulToStart 1 <
+mulToStart 0 -> mulToStart 0 <
+mulToStart _ -> validate _ >
+
+validate 1 -> validate 1 >
+validate 0 -> validate 0 >
+validate 0* -> validate 0 >
+validate 1* -> validate 1 >
+validate 0' -> validate 0 >
+validate 1' -> validate 1 >
+validate = -> validate = >
+validate * -> mulS * ^
+
+prepareToDecrement 0 -> prepareToDecrement 0 >
+prepareToDecrement 1 -> prepareToDecrement 1 >
+prepareToDecrement * -> prepareToDecrement * >
+prepareToDecrement $ -> prepareToDecrement $ >
+prepareToDecrement | -> prepareToDecrement | >
+prepareToDecrement _ -> decrementBeforeCopy _ <
+
+decrementBeforeCopy 1 -> toDelimeterForCheck 0 ^
+decrementBeforeCopy 0 -> decrementBeforeCopy 1 <
+decrementBeforeCopy | -> ac | ^
+
+toDelimeterForCheck 0 -> toDelimeterForCheck 0 <
+toDelimeterForCheck 1 -> toDelimeterForCheck 1 <
+toDelimeterForCheck | -> checkZero | >
+
+checkZero 0 -> checkZero 0 >
+checkZero 1 -> prepareToCopyFromRight 1 ^
+checkZero _ -> cleanUntil _ <
+
+prepareToCopyFromRight 0 -> prepareToCopyFromRight 0 <
+prepareToCopyFromRight 1 -> prepareToCopyFromRight 1 <
+prepareToCopyFromRight | -> copyFromRight | >
+
+copyFromRight 1 -> copyFromRightOne 1' <
+copyFromRight 0 -> copyFromRightZero 0' <
+copyFromRight _ -> goDoMul _ <
+
+copyFromRightOne 0 -> copyFromRightOne 0 <
+copyFromRightOne 1 -> copyFromRightOne 1 <
+copyFromRightOne | -> copyFromRightOne | <
+copyFromRightOne $ -> copyFromRightOne $ <
+copyFromRightOne * -> placeOne * >
+copyFromRightOne o -> placeOne 1 >
+copyFromRightOne z -> placeOne 0 >
+
+copyFromRightZero 0 -> copyFromRightZero 0 <
+copyFromRightZero 1 -> copyFromRightZero 1 <
+copyFromRightZero | -> copyFromRightZero | <
+copyFromRightZero $ -> copyFromRightZero $ <
+copyFromRightZero * -> placeZero * >
+copyFromRightZero o -> placeZero 1 >
+copyFromRightZero z -> placeZero 0 >
+
+placeOne $ -> copyAnother o >
+placeZero $ -> copyAnother z >
+
+copyAnother $ -> copyAnother $ >
+copyAnother | -> copyAnother | >
+copyAnother 1 -> copyAnother 1 >
+copyAnother 0 -> copyAnother 0 >
+copyAnother 1' -> copyFromRight 1 >
+copyAnother 0' -> copyFromRight 0 >
+
+goDoMul 0 -> goDoMul 0 <
+goDoMul 1 -> goDoMul 1 <
+goDoMul o -> goDoMul 1 <
+goDoMul z -> goDoMul 0 <
+goDoMul * -> goDoMul * <
+goDoMul | -> goDoMul | <
+goDoMul _ -> mulDel _ >
+
+cleanUntil 0 -> cleanUntil _ <
+cleanUntil 1 -> cleanUntil _ <
+cleanUntil $ -> cleanUntil _ <
+cleanUntil | -> cleanUntil _ <
+cleanUntil * -> finishFactor * ^
+
+finishFactor * -> finishFactor _ <
+finishFactor 0 -> finishFactor 0 <
+finishFactor 1 -> finishFactor 1 <
+finishFactor _ -> ac _ >

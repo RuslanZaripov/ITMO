@@ -1,0 +1,90 @@
+3
+
+S 1 _ _ -> S 1 > 1 > _ ^
+S 0 _ _ -> S 0 > 0 > _ ^
+S | _ _ -> S | > | > _ ^
+S _ _ _ -> findZero | < | < _ ^
+
+findZero 0 0 _ -> findZero 0 < 0 < _ ^
+findZero | | _ -> copyZero | > | > _ ^
+findZero _ _ _ -> copyZero _ > _ > _ ^
+
+findZero 1 1 _ -> skipDel 1 < 1 < _ ^
+
+skipDel _ _ _ -> goToDelBeforeDecrement _ > _ > _ ^
+skipDel x x _ -> skipDel x < x < _ ^
+skipDel 0 0 _ -> skipDel 0 < 0 < _ ^
+skipDel 1 1 _ -> skipDel 1 < 1 < _ ^
+skipDel | | _ -> findZero | < | < _ ^
+
+copyZero 0 0 _ -> copyZero x > x > 0 >
+copyZero | | _ -> skipDel x ^ x ^ | >
+
+checkFinal _ _ _ -> copyResult _ ^ _ ^ _ <
+checkFinal x x _ -> checkFinal x < x < _ ^
+checkFinal | | _ -> toStart | ^ | ^ _ ^
+checkFinal 0 0 _ -> toStart 0 ^ 0 ^ _ ^
+checkFinal 0 1 _ -> toStart 0 ^ 1 ^ _ ^
+checkFinal 1 0 _ -> toStart 1 ^ 0 ^ _ ^
+checkFinal 1 1 _ -> toStart 1 ^ 1 ^ _ ^
+
+toStart x x _ -> toStart x < x < _ ^
+toStart 1 0 _ -> toStart 1 < 0 < _ ^
+toStart 0 1 _ -> toStart 0 < 1 < _ ^
+toStart 0 0 _ -> toStart 0 < 0 < _ ^
+toStart 1 1 _ -> toStart 1 < 1 < _ ^
+toStart | | _ -> toStart | < | < _ ^
+toStart _ _ _ -> goToDelBeforeDecrement _ > _ > _ ^
+
+goToDelBeforeDecrement _ _ _ -> checkFinal _ < _ < _ ^
+goToDelBeforeDecrement x x _ -> goToDelBeforeDecrement x > x > _ ^
+goToDelBeforeDecrement 0 1 _ -> goToDelBeforeDecrement 0 > 1 > _ ^
+goToDelBeforeDecrement 1 0 _ -> goToDelBeforeDecrement 1 > 0 > _ ^
+goToDelBeforeDecrement 0 0 _ -> goToDelBeforeDecrement 0 > 0 > _ ^
+goToDelBeforeDecrement 1 1 _ -> goToDelBeforeDecrement 1 > 1 > _ ^
+goToDelBeforeDecrement ? ? _ -> goToDelBeforeDecrement | > | > _ ^
+goToDelBeforeDecrement | | _ -> startDecrement | < | < _ ^ 
+
+startDecrement x x _ -> copy x > x > _ ^
+startDecrement | | _ -> copy | > | > _ ^
+startDecrement 1 0 _ -> goToDelToCheckZero 0 ^ 0 ^ _ ^
+startDecrement 1 1 _ -> goToDelToCheckZero 0 ^ 1 ^ _ ^
+startDecrement 0 0 _ -> startDecrement 1 < 0 < _ ^
+startDecrement 0 1 _ -> startDecrement 1 < 1 < _ ^
+
+goToDelToCheckZero 0 0 _ -> goToDelToCheckZero 0 > 0 > _ ^
+goToDelToCheckZero 0 1 _ -> goToDelToCheckZero 0 > 1 > _ ^
+goToDelToCheckZero 1 0 _ -> goToDelToCheckZero 1 > 0 > _ ^
+goToDelToCheckZero 1 1 _ -> goToDelToCheckZero 1 > 1 > _ ^
+goToDelToCheckZero | | _ -> checkZero ? < ? < _ ^
+
+checkZero _ _ _ -> copy _ > _ > _ ^
+checkZero x x _ -> copy x > x > _ ^
+checkZero | | _ -> copy | > | > _ ^ 
+checkZero 0 0 _ -> checkZero 0 < 0 < _ ^
+checkZero 0 1 _ -> checkZero 0 < 1 < _ ^
+checkZero 1 0 _ -> goToDelBeforeDecrement 1 ^ 0 ^ _ ^
+checkZero 1 1 _ -> goToDelBeforeDecrement 1 ^ 1 ^ _ ^
+
+copy 1 0 _ -> copy x > x > 0 >
+copy 0 1 _ -> copy x > x > 1 >
+copy 0 0 _ -> copy x > x > 0 >
+copy | | _ -> goToDelBeforeDecrement x ^ x ^ | >
+copy ? ? _ -> goToDelBeforeDecrement x ^ x ^ | >
+
+copyResult _ _ | -> goToStartInResult _ ^ _ ^ _ <
+
+goToStartInResult _ _ 0 -> goToStartInResult _ ^ _ ^ 0 <
+goToStartInResult _ _ 1 -> goToStartInResult _ ^ _ ^ 1 <
+goToStartInResult _ _ | -> goToStartInResult _ ^ _ ^ | <
+goToStartInResult _ _ _ -> finalCopyResult _ > _ > _ >
+
+finalCopyResult x x 1 -> finalCopyResult 1 > _ > _ >
+finalCopyResult x x 0 -> finalCopyResult 0 > _ > _ > 
+finalCopyResult x x | -> finalCopyResult | > _ > _ >
+finalCopyResult x x _ -> finish _ < _ ^ _ ^ 
+
+finish 0 _ _ -> finish 0 < _ ^ _ ^
+finish 1 _ _ -> finish 1 < _ ^ _ ^
+finish | _ _ -> finish | < _ ^ _ ^
+finish _ _ _ -> AC _ > _ ^ _ ^

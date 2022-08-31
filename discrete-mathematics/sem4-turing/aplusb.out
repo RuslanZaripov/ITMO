@@ -1,0 +1,37 @@
+start: toEnd
+accept: ac
+reject: rj
+blank: _
+
+toEnd 0 -> toEnd 0 >
+toEnd 1 -> toEnd 1 >
+toEnd + -> toEnd + >
+toEnd _ -> subtractFromRight _ <
+
+subtractFromRight 1 -> skipToLeft 0 <
+subtractFromRight 0 -> subtractFromRight 1 <
+subtractFromRight + -> clean + ^
+
+skipToLeft 0 -> skipToLeft 0 <
+skipToLeft 1 -> skipToLeft 1 <
+skipToLeft + -> addToLeft + <
+
+addToLeft 0 -> toEnd 1 ^
+addToLeft 1 -> addAddition 0 <
+
+addAddition 0 -> toEnd 1 ^
+addAddition 1 -> addAddition 0 <
+addAddition _ -> toEnd 1 ^
+
+clean + -> clean _ >
+clean 0 -> clean _ >
+clean 1 -> clean _ >
+clean _ -> isNumber _ ^
+
+isNumber _ -> isNumber _ <
+isNumber 0 -> toStart 0 ^
+isNumber 1 -> toStart 1 ^
+
+toStart 0 -> toStart 0 <
+toStart 1 -> toStart 1 <
+toStart _ -> ac _ >

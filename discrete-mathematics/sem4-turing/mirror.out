@@ -1,0 +1,22 @@
+start: changeSymbols
+accept: ac
+reject: rj
+blank: _
+ 
+changeSymbols 1 -> changeSymbols o >
+changeSymbols 0 -> changeSymbols z >
+changeSymbols _ -> move _ <
+ 
+move 1 -> move 1 <
+move 0 -> move 0 <
+move _ -> ac _ >
+move o -> addOne 1 >
+move z -> addZero 0 >
+ 
+addOne 1 -> addOne 1 >
+addOne 0 -> addOne 0 >
+addOne _ -> move 1 <
+ 
+addZero 1 -> addZero 1 >
+addZero 0 -> addZero 0 >
+addZero _ -> move 0 <

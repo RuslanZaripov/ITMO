@@ -1,0 +1,87 @@
+start: delimeter
+accept: ac
+reject: rj
+blank: _
+
+delimeter 0 -> delimeter 0 <
+delimeter 1 -> delimeter 1 <
+delimeter _ -> placeZero | <
+
+placeZero _ -> s 0 >
+
+s | -> s | >
+s 0 -> s 0 > 
+s 1 -> s 1 >
+s * -> s * >
+s _ -> decrement _ <
+
+decrement 1 -> process 0 ^
+decrement 0 -> decrement 1 <
+decrement * -> toEnd * >
+
+toEnd 1 -> toEnd 1 >
+toEnd _ -> cleanUntilSign _ <
+
+cleanUntilSign 1 -> cleanUntilSign _ <
+cleanUntilSign 0 -> cleanUntilSign _ <
+cleanUntilSign * -> cleanUntilSign _ <
+cleanUntilSign | -> finish _ <
+
+finish 0 -> finish 0 <
+finish 1 -> finish 1 <
+finish _ -> ac _ >
+
+process 0 -> process 0 <
+process 1 -> process 1 <
+process * -> add * <
+
+add 1 -> skipOne 1' <
+add 0 -> skipZero 0' <
+add | -> toStart | <
+
+skipOne 0 -> skipOne 0 <
+skipOne 1 -> skipOne 1 <
+skipOne | -> addOne | <
+
+skipZero 0 -> skipZero 0 <
+skipZero 1 -> skipZero 1 <
+skipZero | -> addZero | <
+
+addOne 1 -> addition 0* <
+addOne 0 -> back 1* ^ 
+addOne 1* -> addOne 1* <
+addOne 0* -> addOne 0* <
+addOne _ -> back 1* ^
+
+addZero _ -> back 0* ^
+addZero 1* -> addZero 1* <
+addZero 0* -> addZero 0* <
+addZero 0 -> back 0* ^
+addZero 1 -> back 1* ^
+
+addition 0 -> back 1 ^
+addition 1 -> addition 0 <
+addition _ -> back 1 ^
+
+back 0 -> back 0 >
+back 1 -> back 1 >
+back | -> back | >
+back 1* -> back 1* >
+back 0* -> back 0* >
+back 1' -> add 1' <
+back 0' -> add 0' <
+
+toStart 1* -> toStart 1* <
+toStart 0* -> toStart 0* <
+toStart 1 -> toStart 1 <
+toStart 0 -> toStart 0 <
+toStart _ -> validate _ >
+
+validate 1 -> validate 1 >
+validate 0 -> validate 0 >
+validate 0* -> validate 0 >
+validate 1* -> validate 1 >
+validate 0' -> validate 0 >
+validate 1' -> validate 1 >
+validate | -> validate | >
+validate * -> s * ^
