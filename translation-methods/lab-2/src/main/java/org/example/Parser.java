@@ -1,9 +1,21 @@
 package org.example;
 
-import org.example.node.*;
+import org.example.node.Code;
+import org.example.node.Identifier;
+import org.example.node.Modifier;
+import org.example.node.Node;
+import org.example.node.statement.Statement;
+import org.example.node.statement.StatementWithAssignment;
+import org.example.node.statement.StatementWithoutAssignment;
+import org.example.node.type.Type;
+import org.example.node.value.IntValue;
+import org.example.node.value.StringValue;
+import org.example.node.value.Value;
 
 import java.io.InputStream;
 import java.text.ParseException;
+
+import static org.example.node.type.KotlinType.fromName;
 
 public class Parser {
     LexicalAnalyzer lex;
@@ -45,16 +57,14 @@ public class Parser {
                 lex.nextToken();
                 Type type = Type();
                 lex.nextToken();
-                Value value = Assignment();
+                Value<?> value = Assignment(type);
                 if (value != null) {
-                    if (!value.getType().equals(type.getType())) {
-                        throw new ParseException("Type mismatch", lex.curPos);
-                    }
                     lex.nextToken();
                     expect(Token.SEMICOLON);
                     return new StatementWithAssignment(modifier, id, type, value);
+                } else {
+                    return new StatementWithoutAssignment(modifier, id, type);
                 }
-                return new StatementWithoutAssignment(modifier, id, type);
             }
             default -> throw new ParseException("Expected 'var' or 'val'", lex.curPos);
         }
@@ -63,7 +73,7 @@ public class Parser {
     // Modifier -> VAR | VAL
     private Modifier Modifier() throws ParseException {
         return switch (lex.curToken()) {
-            case VAR, VAL -> new Modifier(lex.curStr());
+            case VAR, VAL -> new Modifier(lex.curToken());
             default -> throw new ParseException("Expected 'var' or 'val'", lex.curPos);
         };
     }
@@ -73,23 +83,38 @@ public class Parser {
         if (lex.curToken() == Token.COLON) {
             lex.nextToken();
             expect(Token.TYPE);
-            return new Type(lex.curStr());
+            return new Type(fromName(lex.curStr()));
         }
         throw new ParseException("Expected ':'", lex.curPos);
     }
 
     // Assignment -> = VALUE | eps
-    private Value Assignment() throws ParseException {
+    private Value<?> Assignment(Type type) throws ParseException {
         switch (lex.curToken()) {
             case EQUAL -> {
                 lex.nextToken();
                 expect(Token.VALUE);
-                return new Value(lex.curStr());
+                return parseValue(type);
             }
             case SEMICOLON -> {
                 return null;
             }
             default -> throw new ParseException("Expected '=' or ';'", lex.curPos);
+        }
+    }
+
+    private Value<?> parseValue(Type type) throws ParseException {
+        final String value = lex.curStr();
+        if (!value.matches(type.type().getRegex())) {
+            throw new ParseException("Value doesn't match type", lex.curPos);
+        }
+        try {
+            return switch (type.type()) {
+                case INT -> new IntValue(Integer.parseInt(value));
+                case STRING -> new StringValue(value.replaceAll("^\"|\"$", ""));
+            };
+        } catch (IllegalArgumentException ex) {
+            throw new ParseException(String.format("Expected '%s'", type.type().getName()), lex.curPos);
         }
     }
 
