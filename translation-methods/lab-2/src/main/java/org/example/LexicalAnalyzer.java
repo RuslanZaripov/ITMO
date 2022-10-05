@@ -26,7 +26,7 @@ public class LexicalAnalyzer {
         try {
             curChar = is.read();
         } catch (IOException e) {
-            throw new ParseException(e.getMessage(), curPos) ;
+            throw new ParseException(e.getMessage(), curPos);
         }
     }
 
@@ -63,9 +63,10 @@ public class LexicalAnalyzer {
         throw new ParseException(String.format("Unexpected token <%s>", curStr), curPos - curStr.length());
     }
 
+    // TODO: try getting rid of hard-coded values
     private String collectChars() throws ParseException {
         StringBuilder sb = new StringBuilder();
-        while(!Character.isWhitespace(curChar) && Character.isLetterOrDigit(curChar)) {
+        while (!Character.isWhitespace(curChar) && curChar != -1 && curChar != ':' && curChar != ';' && curChar != '=') {
             sb.append((char) curChar);
             nextChar();
         }
@@ -86,5 +87,7 @@ public class LexicalAnalyzer {
         return curPos;
     }
 
-    public String curStr() { return curStr; }
+    public String curStr() {
+        return curStr;
+    }
 }

@@ -1,5 +1,7 @@
 package org.example.node;
 
+import org.example.node.statement.Statement;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -7,10 +9,6 @@ import java.util.stream.Collectors;
 
 public class Code implements Node {
     List<Statement> code;
-
-    public Code() {
-        code = new ArrayList<>();
-    }
 
     public Code(Statement statement) {
         code = new ArrayList<>();
@@ -37,7 +35,7 @@ public class Code implements Node {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Code code1 = (Code) o;
-        return code.equals(code1.code);
+        Code that = (Code) o;
+        return code.equals(that.code);
     }
 }

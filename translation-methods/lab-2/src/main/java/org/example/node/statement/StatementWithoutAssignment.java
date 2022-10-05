@@ -1,4 +1,8 @@
-package org.example.node;
+package org.example.node.statement;
+
+import org.example.node.Identifier;
+import org.example.node.Modifier;
+import org.example.node.type.Type;
 
 public record StatementWithoutAssignment(Modifier modifier, Identifier id, Type type) implements Statement {
     @Override

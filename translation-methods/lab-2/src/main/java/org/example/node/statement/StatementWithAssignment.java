@@ -1,6 +1,12 @@
-package org.example.node;
+package org.example.node.statement;
 
-public record StatementWithAssignment(Modifier modifier, Identifier id, Type type, Value value) implements Statement {
+import org.example.node.Identifier;
+import org.example.node.Modifier;
+import org.example.node.type.Type;
+import org.example.node.value.Value;
+
+public record StatementWithAssignment(Modifier modifier, Identifier id, Type type,
+                                      Value<?> value) implements Statement {
     @Override
     public String toString() {
         return "%s %s: %s = %s;".formatted(modifier, id, type, value);
