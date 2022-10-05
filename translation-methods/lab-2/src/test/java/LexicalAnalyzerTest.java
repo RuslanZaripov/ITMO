@@ -12,26 +12,21 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class LexicalAnalyzerTest {
-
-    // test var token
     @Test
     public void testVarToken() throws ParseException {
         test("var", Token.VAR);
     }
 
-    // test val token
     @Test
     public void testValToken() throws ParseException {
         test("val", Token.VAL);
     }
 
-    // test id token
     @Test
     public void testIdToken() throws ParseException {
         test("qwerty12345", Token.ID);
     }
 
-    // test type token
     @Test
     public void testTypeToken() throws ParseException {
         test("Int", Token.TYPE);
@@ -56,8 +51,7 @@ public class LexicalAnalyzerTest {
     public void testEqualToken() throws ParseException {
         test("=", Token.EQUAL);
     }
-
-    // test value
+    
     @Test
     public void testValueToken() throws ParseException {
         test("5", Token.VALUE);
@@ -74,20 +68,18 @@ public class LexicalAnalyzerTest {
     }
 
     @Test
-    public  void testVarDeclarationWithoutAssignment() throws ParseException {
+    public void testVarDeclarationWithoutAssignment() throws ParseException {
         test("var x: Int;", varDeclarationWithoutAssignment());
     }
 
     @Test
-    public  void testValDeclarationWithoutAssignment() throws ParseException {
+    public void testValDeclarationWithoutAssignment() throws ParseException {
         test("val x: Int;", valDeclarationWithoutAssignment());
     }
 
     @Test
     public void testMultipleDeclarations() throws ParseException {
-        test("var x : Int = 5; val y : Int = 6;",
-                combine(varDeclarationWithAssignment(), valDeclarationWithAssignment())
-        );
+        test("var x : Int = 5; val y : Int = 6;", combine(varDeclarationWithAssignment(), valDeclarationWithAssignment()));
     }
 
     private Token[] combine(Token[]... lists) {
