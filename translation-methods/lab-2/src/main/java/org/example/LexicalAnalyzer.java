@@ -3,6 +3,7 @@ package org.example;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.Arrays;
 
 public class LexicalAnalyzer {
     InputStream is;
@@ -55,18 +56,16 @@ public class LexicalAnalyzer {
 
     private Token getToken() throws ParseException {
         curStr = collectChars();
-        for (Token token : Token.values()) {
-            if (curStr.matches(token.getRegex())) {
-                return token;
-            }
-        }
-        throw new ParseException(String.format("Unexpected token <%s>", curStr), curPos - curStr.length());
+        return Arrays.stream(Token.values())
+                .filter(token -> curStr.matches(token.getRegex()))
+                .findFirst()
+                .orElseThrow(() -> new ParseException("Unexpected token", curPos));
     }
 
     // TODO: try getting rid of hard-coded values
     private String collectChars() throws ParseException {
         StringBuilder sb = new StringBuilder();
-        while (!Character.isWhitespace(curChar)
+        while (!isBlank(curChar)
                 && curChar != -1
                 && curChar != ':'
                 && curChar != ';'
