@@ -2,8 +2,11 @@ package org.example.node;
 
 import org.example.Token;
 
+import java.util.List;
+
 public class Modifier implements Node {
     private final Token token;
+    private int number;
 
     public Modifier(Token token) {
         switch (token) {
@@ -15,6 +18,31 @@ public class Modifier implements Node {
     @Override
     public String toString() {
         return token.getRegex();
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(token);
+    }
+
+    @Override
+    public String getLabel() {
+        return "mod";
+    }
+
+    @Override
+    public int getCountNumber() {
+        return 2;
+    }
+
+    @Override
+    public int getNumber() {
+        return number;
+    }
+
+    @Override
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     @Override

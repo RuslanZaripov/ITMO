@@ -1,13 +1,16 @@
 package org.example;
 
+import org.example.node.Node;
 import org.example.node.type.KotlinType;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 // (VAR | VAL) ID COLON TYPE (EQUAL VALUE | eps) SEMICOLON END
-public enum Token {
+public enum Token implements Node {
     VAR("var"),
     VAL("val"),
     COLON(":"),
@@ -19,6 +22,7 @@ public enum Token {
     EOF("$");
 
     private final String regex;
+    private int number;
 
     Token(String regex) {
         this.regex = regex;
@@ -32,5 +36,30 @@ public enum Token {
 
     public String getRegex() {
         return regex;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public String getLabel() {
+        return name();
+    }
+
+    @Override
+    public int getCountNumber() {
+        return 1;
+    }
+
+    @Override
+    public int getNumber() {
+        return number;
+    }
+
+    @Override
+    public void setNumber(int number) {
+        this.number = number;
     }
 }

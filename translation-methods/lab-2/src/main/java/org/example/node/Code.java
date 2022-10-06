@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Code implements Node {
-    List<Statement> code;
+    List<Node> code;
+    private int number;
 
     public Code(Statement statement) {
         code = new ArrayList<>();
@@ -29,6 +30,31 @@ public class Code implements Node {
     @Override
     public String toString() {
         return code.stream().map(Node::toString).collect(Collectors.joining("\n"));
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return code;
+    }
+
+    @Override
+    public String getLabel() {
+        return "list";
+    }
+
+    @Override
+    public int getCountNumber() {
+        return 12 * code.size() + 1;
+    }
+
+    @Override
+    public int getNumber() {
+        return number;
+    }
+
+    @Override
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     @Override
