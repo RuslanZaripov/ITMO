@@ -41,10 +41,7 @@ public class Parser {
         Statement statement = Statement(Modifier());
         lex.nextToken();
         Code code = ListPrime();
-        if (code == null) {
-            return new Code(statement);
-        }
-        return new Code(statement, code);
+        return code == null ? new Code(statement) : new Code(statement, code);
     }
 
     // Statement -> Modifier ID Type Assignment SEMICOLON
@@ -120,9 +117,7 @@ public class Parser {
 
     private void expect(Token token) throws ParseException {
         if (lex.curToken() != token) {
-            throw new ParseException(
-                    String.format("Expected token <%s>, actual token <%s>", lex.curToken(), token.getRegex()),
-                    lex.curPos());
+            throw new ParseException(String.format("Expected token <%s>, actual token <%s>", lex.curToken(), token.getRegex()), lex.curPos());
         }
     }
 
@@ -130,10 +125,6 @@ public class Parser {
     public Node parse(InputStream in) throws ParseException {
         lex = new LexicalAnalyzer(in);
         lex.nextToken();
-        final Code code = StatementList();
-        if (lex.curToken != Token.EOF) {
-            throw new ParseException("Unexpected token: " + lex.curToken, lex.curPos);
-        }
-        return code;
+        return StatementList();
     }
 }

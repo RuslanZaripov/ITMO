@@ -3,7 +3,6 @@ package org.example.node.type;
 import org.example.node.Node;
 
 public record Type(KotlinType type) implements Node {
-
     public String toString() {
         return type.getName();
     }

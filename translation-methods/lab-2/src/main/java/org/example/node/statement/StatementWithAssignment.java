@@ -5,7 +5,9 @@ import org.example.node.Modifier;
 import org.example.node.type.Type;
 import org.example.node.value.Value;
 
-public record StatementWithAssignment(Modifier modifier, Identifier id, Type type,
+public record StatementWithAssignment(Modifier modifier,
+                                      Identifier id,
+                                      Type type,
                                       Value<?> value) implements Statement {
     @Override
     public String toString() {

@@ -66,7 +66,11 @@ public class LexicalAnalyzer {
     // TODO: try getting rid of hard-coded values
     private String collectChars() throws ParseException {
         StringBuilder sb = new StringBuilder();
-        while (!Character.isWhitespace(curChar) && curChar != -1 && curChar != ':' && curChar != ';' && curChar != '=') {
+        while (!Character.isWhitespace(curChar)
+                && curChar != -1
+                && curChar != ':'
+                && curChar != ';'
+                && curChar != '=') {
             sb.append((char) curChar);
             nextChar();
         }
