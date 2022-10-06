@@ -25,7 +25,7 @@ public class Visualizer {
 
     private String buildGraph(Node node) {
         return "digraph G {" + "\n" +
-                "\t" + "node [shape=circle]" + "\n" +
+                "\t" + "node [shape=circle, style=filled]" + "\n" +
                 buildGraphHelper(node, 0) +
                 "}" + "\n";
     }
@@ -35,6 +35,9 @@ public class Visualizer {
         StringBuilder builder = new StringBuilder();
         builder.append("\t").append("%d [label=\"%s\"]".formatted(nodeNumber, curr.getLabel())).append("\n");
         List<Node> children = curr.getChildren();
+        if (children.isEmpty()) {
+            builder.append("\t").append("%d [color=red]".formatted(nodeNumber)).append("\n");
+        }
         for (int i = 0; i < children.size(); i++) {
             int nextNodeNumber = i == 0
                     ? nodeNumber + 1
