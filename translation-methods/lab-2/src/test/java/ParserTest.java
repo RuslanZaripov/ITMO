@@ -97,6 +97,34 @@ public class ParserTest {
         assertEquals(new Code(st(var, "a", String, "Hello")), test("var a: String = \"Hello\";"));
     }
 
+
+    @Test(expected = ParseException.class)
+    public void testIncorrectStringInit() throws ParseException {
+        build("var a: String = Hello;");
+    }
+
+
+    @Test(expected = ParseException.class)
+    public void testMissingSemicolon() throws ParseException {
+        build("var a: String = \"Hello\"");
+    }
+
+
+    @Test(expected = ParseException.class)
+    public void testMissingType() throws ParseException {
+        build("var a = 1;");
+    }
+
+    @Test(expected = ParseException.class)
+    public void testMissingModifier() throws ParseException {
+        build("a: Int = 1;");
+    }
+
+    @Test(expected = ParseException.class)
+    public void testMissingEqualSign() throws ParseException {
+        build("var a: Int 1;");
+    }
+
     Node build(String input) throws ParseException {
         return parser.parse(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
     }
