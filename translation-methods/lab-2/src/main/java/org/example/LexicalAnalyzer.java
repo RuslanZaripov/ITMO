@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Arrays;
 
+import static org.example.Token.*;
+
 public class LexicalAnalyzer {
     InputStream is;
     int curChar;
@@ -33,50 +35,42 @@ public class LexicalAnalyzer {
 
     public void nextToken() throws ParseException {
         skipWhitespaces();
-        switch (curChar) {
-            case ':' -> {
-                nextChar();
-                curToken = Token.COLON;
-            }
-            case ';' -> {
-                nextChar();
-                curToken = Token.SEMICOLON;
-            }
-            case '=' -> {
-                nextChar();
-                curToken = Token.EQUAL;
-            }
-            case -1 -> {
-                nextChar();
-                curToken = Token.EOF;
-            }
-            default -> curToken = getToken();
-        }
+        curToken = switch (curChar) {
+            case ':' -> nextCharAndReturn(COLON);
+            case ';' -> nextCharAndReturn(SEMICOLON);
+            case '=' -> nextCharAndReturn(EQUAL);
+            case -1 -> nextCharAndReturn(EOF);
+            default -> parseToken();
+        };
     }
 
-    private Token getToken() throws ParseException {
+    private Token nextCharAndReturn(Token token) throws ParseException {
+        nextChar();
+        return token;
+    }
+
+    private Token parseToken() throws ParseException {
         curStr = collectChars();
-        return Arrays.stream(Token.values())
+        return Arrays.stream(values())
                 .filter(token -> curStr.matches(token.getRegex()))
                 .findFirst()
                 .orElseThrow(() -> new ParseException("Unexpected token", curPos));
     }
 
-    // TODO: try getting rid of hard-coded values
     private String collectChars() throws ParseException {
         StringBuilder sb = new StringBuilder();
-        while (!isBlank(curChar)
-                && curChar != -1
-                && curChar != ':'
-                && curChar != ';'
-                && curChar != '=') {
+        while (!isBlank(curChar) && !isTokenCharacter(curChar)) {
             sb.append((char) curChar);
             nextChar();
         }
         return sb.toString();
     }
 
-    public void skipWhitespaces() throws ParseException {
+    private boolean isTokenCharacter(int c) {
+        return c == -1 || c == ':' || c == ';' || c == '=';
+    }
+
+    private void skipWhitespaces() throws ParseException {
         while (isBlank(curChar)) {
             nextChar();
         }
