@@ -102,7 +102,7 @@ public class Parser {
 
     private Value<?> parseValue(Type type) throws ParseException {
         final String value = lex.curStr();
-        if (!value.matches(type.type().getRegex())) {
+        if (!value.matches(type.getType().getRegex())) {
             throw new ParseException("Value doesn't match type", lex.curPos);
         }
         try {
@@ -111,13 +111,16 @@ public class Parser {
                 case STRING -> new StringValue(value.replaceAll("^\"|\"$", ""));
             };
         } catch (IllegalArgumentException ex) {
-            throw new ParseException(String.format("Expected '%s'", type.type().getName()), lex.curPos);
+            throw new ParseException("Expected '%s'".formatted(type.getType().getName()), lex.curPos);
         }
     }
 
     private void expect(Token token) throws ParseException {
         if (lex.curToken() != token) {
-            throw new ParseException(String.format("Expected token <%s>, actual token <%s>", lex.curToken(), token.getRegex()), lex.curPos());
+            throw new ParseException(
+                    "Token <%s> doesn't match regex <%s>".formatted(lex.curToken(), token.getRegex()),
+                    lex.curPos()
+            );
         }
     }
 

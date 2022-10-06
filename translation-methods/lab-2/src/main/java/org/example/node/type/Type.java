@@ -7,6 +7,10 @@ public record Type(KotlinType type) implements Node {
         return type.getName();
     }
 
+    public KotlinType getType() {
+        return type;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
