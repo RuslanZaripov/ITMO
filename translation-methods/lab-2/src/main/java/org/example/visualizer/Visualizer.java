@@ -25,7 +25,7 @@ public class Visualizer {
 
     private String buildGraph(Node node) {
         return "digraph G {" + "\n" +
-                "\t" + "node [shape=circle, style=filled]" + "\n" +
+                "\t" + "node [shape=oval, style=filled, fixedsize=true]" + "\n" +
                 buildGraphHelper(node, 0) +
                 "}" + "\n";
     }
