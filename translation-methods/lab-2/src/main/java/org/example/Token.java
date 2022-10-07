@@ -11,21 +11,24 @@ import java.util.stream.Collectors;
 
 // (VAR | VAL) ID COLON TYPE (EQUAL VALUE | eps) SEMICOLON END
 public enum Token implements Node {
-    VAR("var"),
-    VAL("val"),
-    COLON(":"),
-    EQUAL("="),
-    SEMICOLON(";"),
-    TYPE(generateRegex(KotlinType::getName)),
-    VALUE(generateRegex(KotlinType::getRegex)),
-    ID("[a-zA-Z_][a-zA-Z0-9_]*"),
-    EOF("$");
+    VAR("var", "VAR"),
+    VAL("val", "VAL"),
+    COLON(":", ":"),
+    EQUAL("=", "="),
+    SEMICOLON(";", ";"),
+    TYPE(generateRegex(KotlinType::getName), "TYPE"),
+    VALUE(generateRegex(KotlinType::getRegex), "VALUE"),
+    ID("[a-zA-Z_][a-zA-Z0-9_]*", "ID"),
+    EOF("$", "EOF"),
+    EPS("eps", "EPS");
 
     private final String regex;
+    private final String label;
     private int number;
 
-    Token(String regex) {
+    Token(String regex, String label) {
         this.regex = regex;
+        this.label = label;
     }
 
     private static String generateRegex(Function<KotlinType, String> lambda) {
@@ -45,7 +48,7 @@ public enum Token implements Node {
 
     @Override
     public String getLabel() {
-        return name();
+        return label;
     }
 
     @Override
