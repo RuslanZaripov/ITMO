@@ -1,9 +1,9 @@
 package org.example;
 
 import org.example.node.*;
-import org.example.node.statement.Statement;
-import org.example.node.statement.StatementWithAssignment;
-import org.example.node.statement.StatementWithoutAssignment;
+import org.example.node.assignment.Assignment;
+import org.example.node.assignment.EmptyAssignment;
+import org.example.node.assignment.ValidAssignment;
 import org.example.node.type.Type;
 import org.example.node.value.IntValue;
 import org.example.node.value.StringValue;
@@ -51,14 +51,8 @@ public class Parser {
                 lex.nextToken();
                 Type type = Type();
                 lex.nextToken();
-                Assign assign = Assignment(type);
-                if (assign != null) {
-                    lex.nextToken();
-                    expect(Token.SEMICOLON);
-                    return new StatementWithAssignment(modifier, id, type, assign);
-                } else {
-                    return new StatementWithoutAssignment(modifier, id, type);
-                }
+                Assignment assignment = Assignment(type);
+                return new Statement(modifier, id, type, assignment);
             }
             default -> throw new ParseException("Expected 'var' or 'val'", lex.curPos);
         }
@@ -83,15 +77,17 @@ public class Parser {
     }
 
     // Assignment -> = VALUE | eps
-    private Assign Assignment(Type type) throws ParseException {
+    private Assignment Assignment(Type type) throws ParseException {
         switch (lex.curToken()) {
             case EQUAL -> {
                 lex.nextToken();
                 expect(Token.VALUE);
-                return new Assign(parseValue(type));
+                lex.nextToken();
+                expect(Token.SEMICOLON);
+                return new ValidAssignment(parseValue(type));
             }
             case SEMICOLON -> {
-                return null;
+                return new EmptyAssignment();
             }
             default -> throw new ParseException("Expected '=' or ';'", lex.curPos);
         }

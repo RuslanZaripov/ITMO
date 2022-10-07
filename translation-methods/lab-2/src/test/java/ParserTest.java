@@ -1,9 +1,8 @@
 import org.example.Parser;
 import org.example.Token;
 import org.example.node.*;
-import org.example.node.statement.Statement;
-import org.example.node.statement.StatementWithAssignment;
-import org.example.node.statement.StatementWithoutAssignment;
+import org.example.node.assignment.EmptyAssignment;
+import org.example.node.assignment.ValidAssignment;
 import org.example.node.type.Type;
 import org.example.node.value.IntValue;
 import org.example.node.value.StringValue;
@@ -26,11 +25,11 @@ public class ParserTest {
     private final Type String = new Type(STRING);
 
     private static <T> Statement st(Modifier mod, String id, Type type, T value) {
-        return new StatementWithAssignment(mod, new Identifier(id), type, new Assign(specifyValue(value)));
+        return new Statement(mod, new Identifier(id), type, new ValidAssignment(specifyValue(value)));
     }
 
     private static Statement st(Modifier mod, String id, Type type) {
-        return new StatementWithoutAssignment(mod, new Identifier(id), type);
+        return new Statement(mod, new Identifier(id), type, new EmptyAssignment());
     }
 
     private static <T> Value<?> specifyValue(T value) {

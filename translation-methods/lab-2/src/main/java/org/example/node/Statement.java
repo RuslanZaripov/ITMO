@@ -1,31 +1,31 @@
-package org.example.node.statement;
+package org.example.node;
 
 import org.example.Token;
-import org.example.node.*;
+import org.example.node.assignment.Assignment;
 import org.example.node.type.Type;
 
 import java.util.List;
 
-public class StatementWithAssignment extends AbstractNode implements Statement {
+public class Statement extends AbstractNode {
     private final Modifier modifier;
     private final Identifier id;
     private final Type type;
-    private final Assign assign;
+    private final Assignment assignment;
 
-    public StatementWithAssignment(Modifier modifier, Identifier id, Type type, Assign assign) {
+    public Statement(Modifier modifier, Identifier id, Type type, Assignment assignment) {
         this.modifier = modifier;
         this.id = id;
         this.type = type;
-        this.assign = assign;
+        this.assignment = assignment;
     }
 
     @Override
     public String toString() {
-        return "%s %s%s %s;".formatted(modifier, id, type, assign);
+        return "%s %s%s%s;".formatted(modifier, id, type, assignment);
     }
 
     public List<Node> getChildren() {
-        return List.of(modifier, id, type, assign, Token.SEMICOLON);
+        return List.of(modifier, id, type, assignment, Token.SEMICOLON);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class StatementWithAssignment extends AbstractNode implements Statement {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        StatementWithAssignment that = (StatementWithAssignment) o;
-        return modifier.equals(that.modifier) && id.equals(that.id) && type.equals(that.type) && assign.equals(that.assign);
+        Statement that = (Statement) o;
+        return modifier.equals(that.modifier) && id.equals(that.id) && type.equals(that.type) && assignment.equals(that.assignment);
     }
 }

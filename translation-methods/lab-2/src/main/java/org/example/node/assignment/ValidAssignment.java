@@ -1,14 +1,16 @@
-package org.example.node;
+package org.example.node.assignment;
 
 import org.example.Token;
+import org.example.node.AbstractNode;
+import org.example.node.Node;
 import org.example.node.value.Value;
 
 import java.util.List;
 
-public class Assign extends AbstractNode {
+public class ValidAssignment extends AbstractNode implements Assignment {
     private final Value<?> value;
 
-    public Assign(Value<?> value) {
+    public ValidAssignment(Value<?> value) {
         this.value = value;
     }
 
@@ -18,24 +20,19 @@ public class Assign extends AbstractNode {
     }
 
     @Override
-    public String getLabel() {
-        return "assign";
-    }
-
-    @Override
     public int getCountNumber() {
         return 3;
     }
 
     public String toString() {
-        return "= %s".formatted(value);
+        return " = %s".formatted(value);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Assign assign = (Assign) o;
-        return value.equals(assign.value);
+        ValidAssignment assignment = (ValidAssignment) o;
+        return value.equals(assignment.value);
     }
 }
