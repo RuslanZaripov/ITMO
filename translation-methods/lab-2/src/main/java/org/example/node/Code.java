@@ -7,9 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Code implements Node {
+public class Code extends AbstractNode {
     List<Node> code;
-    private int number;
 
     public Code(Statement statement) {
         code = new ArrayList<>();
@@ -45,16 +44,6 @@ public class Code implements Node {
     @Override
     public int getCountNumber() {
         return 12 * code.size() + 1;
-    }
-
-    @Override
-    public int getNumber() {
-        return number;
-    }
-
-    @Override
-    public void setNumber(int number) {
-        this.number = number;
     }
 
     @Override

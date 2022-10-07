@@ -1,40 +1,41 @@
 package org.example.node;
 
-import java.util.Collections;
+import org.example.Token;
+import org.example.node.value.Value;
+
 import java.util.List;
 
-public class Identifier extends AbstractNode {
-    private final String name;
+public class Assign extends AbstractNode {
+    private final Value<?> value;
 
-    public Identifier(String name) {
-        this.name = name;
+    public Assign(Value<?> value) {
+        this.value = value;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Collections.emptyList();
+        return List.of(Token.EQUAL, value);
     }
 
     @Override
     public String getLabel() {
-        return "ID";
+        return "assign";
     }
 
     @Override
     public int getCountNumber() {
-        return 1;
+        return 3;
     }
 
-    @Override
     public String toString() {
-        return name;
+        return "= %s".formatted(value);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Identifier that = (Identifier) o;
-        return name.equals(that.name);
+        Assign assign = (Assign) o;
+        return value.equals(assign.value);
     }
 }

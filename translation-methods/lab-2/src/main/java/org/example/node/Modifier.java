@@ -4,9 +4,8 @@ import org.example.Token;
 
 import java.util.List;
 
-public class Modifier implements Node {
+public class Modifier extends AbstractNode {
     private final Token token;
-    private int number;
 
     public Modifier(Token token) {
         switch (token) {
@@ -33,16 +32,6 @@ public class Modifier implements Node {
     @Override
     public int getCountNumber() {
         return 2;
-    }
-
-    @Override
-    public int getNumber() {
-        return number;
-    }
-
-    @Override
-    public void setNumber(int number) {
-        this.number = number;
     }
 
     @Override

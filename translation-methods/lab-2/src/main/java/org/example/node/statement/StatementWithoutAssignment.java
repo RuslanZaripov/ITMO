@@ -1,6 +1,7 @@
 package org.example.node.statement;
 
 import org.example.Token;
+import org.example.node.AbstractNode;
 import org.example.node.Identifier;
 import org.example.node.Modifier;
 import org.example.node.Node;
@@ -8,12 +9,20 @@ import org.example.node.type.Type;
 
 import java.util.List;
 
-public record StatementWithoutAssignment(Modifier modifier, Identifier id, Type type) implements Statement {
-    private static int number;
+public class StatementWithoutAssignment extends AbstractNode implements Statement {
+    private final Modifier modifier;
+    private final Identifier id;
+    private final Type type;
+
+    public StatementWithoutAssignment(Modifier modifier, Identifier id, Type type) {
+        this.modifier = modifier;
+        this.id = id;
+        this.type = type;
+    }
 
     @Override
     public String toString() {
-        return "%s %s: %s;".formatted(modifier, id, type);
+        return "%s %s%s;".formatted(modifier, id, type);
     }
 
     public List<Node> getChildren() {
@@ -28,16 +37,6 @@ public record StatementWithoutAssignment(Modifier modifier, Identifier id, Type 
     @Override
     public int getCountNumber() {
         return 12;
-    }
-
-    @Override
-    public int getNumber() {
-        return number;
-    }
-
-    @Override
-    public void setNumber(int number) {
-        StatementWithoutAssignment.number = number;
     }
 
     @Override

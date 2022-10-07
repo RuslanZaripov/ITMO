@@ -1,9 +1,6 @@
 package org.example;
 
-import org.example.node.Code;
-import org.example.node.Identifier;
-import org.example.node.Modifier;
-import org.example.node.Node;
+import org.example.node.*;
 import org.example.node.statement.Statement;
 import org.example.node.statement.StatementWithAssignment;
 import org.example.node.statement.StatementWithoutAssignment;
@@ -54,11 +51,11 @@ public class Parser {
                 lex.nextToken();
                 Type type = Type();
                 lex.nextToken();
-                Value<?> value = Assignment(type);
-                if (value != null) {
+                Assign assign = Assignment(type);
+                if (assign != null) {
                     lex.nextToken();
                     expect(Token.SEMICOLON);
-                    return new StatementWithAssignment(modifier, id, type, value);
+                    return new StatementWithAssignment(modifier, id, type, assign);
                 } else {
                     return new StatementWithoutAssignment(modifier, id, type);
                 }
@@ -86,12 +83,12 @@ public class Parser {
     }
 
     // Assignment -> = VALUE | eps
-    private Value<?> Assignment(Type type) throws ParseException {
+    private Assign Assignment(Type type) throws ParseException {
         switch (lex.curToken()) {
             case EQUAL -> {
                 lex.nextToken();
                 expect(Token.VALUE);
-                return parseValue(type);
+                return new Assign(parseValue(type));
             }
             case SEMICOLON -> {
                 return null;
@@ -106,7 +103,7 @@ public class Parser {
             throw new ParseException("Value doesn't match type", lex.curPos);
         }
         try {
-            return switch (type.type()) {
+            return switch (type.getType()) {
                 case INT -> new IntValue(Integer.parseInt(value));
                 case STRING -> new StringValue(value.replaceAll("^\"|\"$", ""));
             };

@@ -1,5 +1,6 @@
 package org.example;
 
+import org.example.node.Node;
 import org.example.visualizer.Visualizer;
 
 import java.text.ParseException;
@@ -9,7 +10,9 @@ public class Main {
         Parser parser = new Parser();
         try {
             final String path = "src/main/resources/graph/tree.dot";
-            Visualizer visualizer = new Visualizer(parser.parse(System.in), path);
+            final Node node = parser.parse(System.in);
+            System.out.println(node);
+            Visualizer visualizer = new Visualizer(node, path);
             visualizer.visualize();
         } catch (ParseException e) {
             throw new RuntimeException(e);

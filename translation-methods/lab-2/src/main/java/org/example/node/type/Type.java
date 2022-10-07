@@ -1,15 +1,16 @@
 package org.example.node.type;
 
 import org.example.Token;
+import org.example.node.AbstractNode;
 import org.example.node.Node;
 
 import java.util.List;
 
-public record Type(KotlinType type) implements Node {
-    private static int number;
+public class Type extends AbstractNode {
+    private final KotlinType type;
 
-    public String toString() {
-        return type.getName();
+    public Type(KotlinType type) {
+        this.type = type;
     }
 
     @Override
@@ -27,18 +28,12 @@ public record Type(KotlinType type) implements Node {
         return 3;
     }
 
-    @Override
-    public int getNumber() {
-        return number;
-    }
-
-    @Override
-    public void setNumber(int number) {
-        Type.number = number;
-    }
-
     public KotlinType getType() {
         return type;
+    }
+
+    public String toString() {
+        return ": " + type.getName();
     }
 
     @Override
