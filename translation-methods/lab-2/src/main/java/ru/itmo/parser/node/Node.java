@@ -1,4 +1,4 @@
-package org.example.node;
+package ru.itmo.parser.node;
 
 import java.util.List;
 

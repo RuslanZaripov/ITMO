@@ -1,7 +1,7 @@
-package org.example.node.value;
+package ru.itmo.parser.node.value;
 
-import org.example.node.AbstractNode;
-import org.example.node.Node;
+import ru.itmo.parser.node.AbstractNode;
+import ru.itmo.parser.node.Node;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,10 +34,8 @@ public class Value<T> extends AbstractNode {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Value<?> value1 = (Value<?>) o;
-        return value.equals(value1.value);
+        Value<?> that = (Value<?>) o;
+        return super.equals(o) && value.equals(that.value);
     }
 
     public String toString() {

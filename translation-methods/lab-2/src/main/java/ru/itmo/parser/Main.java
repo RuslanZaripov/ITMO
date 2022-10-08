@@ -1,7 +1,7 @@
-package org.example;
+package ru.itmo.parser;
 
-import org.example.node.Node;
-import org.example.visualizer.Visualizer;
+import ru.itmo.parser.node.Node;
+import ru.itmo.parser.visualizer.Visualizer;
 
 import java.text.ParseException;
 
@@ -14,8 +14,8 @@ public class Main {
             System.out.println(node);
             Visualizer visualizer = new Visualizer(node, path);
             visualizer.visualize();
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+        } catch (ParseException ex) {
+            System.err.println(ex.getMessage());
         }
     }
 }

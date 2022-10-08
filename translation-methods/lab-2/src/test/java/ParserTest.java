@@ -1,20 +1,20 @@
-import org.example.Parser;
-import org.example.Token;
-import org.example.node.*;
-import org.example.node.assignment.EmptyAssignment;
-import org.example.node.assignment.ValidAssignment;
-import org.example.node.type.Type;
-import org.example.node.value.IntValue;
-import org.example.node.value.StringValue;
-import org.example.node.value.Value;
+import ru.itmo.parser.Parser;
+import ru.itmo.parser.Token;
+import ru.itmo.parser.node.*;
+import ru.itmo.parser.node.assignment.EmptyAssignment;
+import ru.itmo.parser.node.assignment.ValidAssignment;
+import ru.itmo.parser.node.type.Type;
+import ru.itmo.parser.node.value.IntValue;
+import ru.itmo.parser.node.value.StringValue;
+import ru.itmo.parser.node.value.Value;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
-import static org.example.node.type.KotlinType.INT;
-import static org.example.node.type.KotlinType.STRING;
+import static ru.itmo.parser.node.type.KotlinType.INT;
+import static ru.itmo.parser.node.type.KotlinType.STRING;
 import static org.junit.Assert.assertEquals;
 
 public class ParserTest {

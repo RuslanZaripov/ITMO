@@ -1,4 +1,4 @@
-package org.example.node.type;
+package ru.itmo.parser.node.type;
 
 import java.util.Arrays;
 

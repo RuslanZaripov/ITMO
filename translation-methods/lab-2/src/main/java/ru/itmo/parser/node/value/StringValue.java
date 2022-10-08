@@ -1,4 +1,4 @@
-package org.example.node.value;
+package ru.itmo.parser.node.value;
 
 public class StringValue extends Value<String> {
     public StringValue(String value) {

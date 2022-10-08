@@ -1,5 +1,5 @@
-import org.example.LexicalAnalyzer;
-import org.example.Token;
+import ru.itmo.parser.LexicalAnalyzer;
+import ru.itmo.parser.Token;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -51,7 +51,7 @@ public class LexicalAnalyzerTest {
     public void testEqualToken() throws ParseException {
         test("=", Token.EQUAL);
     }
-    
+
     @Test
     public void testValueToken() throws ParseException {
         test("5", Token.VALUE);

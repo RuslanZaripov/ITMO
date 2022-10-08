@@ -1,15 +1,15 @@
-package org.example.node.type;
+package ru.itmo.parser.node.type;
 
-import org.example.Token;
-import org.example.node.AbstractNode;
-import org.example.node.Node;
+import ru.itmo.parser.Token;
+import ru.itmo.parser.node.AbstractNode;
+import ru.itmo.parser.node.Node;
 
 import java.util.List;
 
 public class Type extends AbstractNode {
     private final KotlinType type;
 
-    public Type(KotlinType type) {
+    public Type(final KotlinType type) {
         this.type = type;
     }
 
@@ -33,14 +33,12 @@ public class Type extends AbstractNode {
     }
 
     public String toString() {
-        return ": " + type.getName();
+        return ": %s".formatted(type.getName());
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
         Type that = (Type) o;
-        return type == that.type;
+        return super.equals(o) && type.equals(that.type);
     }
 }

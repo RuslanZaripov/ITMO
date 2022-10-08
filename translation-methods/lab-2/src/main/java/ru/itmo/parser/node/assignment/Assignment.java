@@ -1,6 +1,6 @@
-package org.example.node.assignment;
+package ru.itmo.parser.node.assignment;
 
-import org.example.node.Node;
+import ru.itmo.parser.node.Node;
 
 public interface Assignment extends Node {
     default String getLabel() {

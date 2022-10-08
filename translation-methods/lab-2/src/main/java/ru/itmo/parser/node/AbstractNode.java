@@ -1,6 +1,6 @@
-package org.example.node;
+package ru.itmo.parser.node;
 
-import org.example.Token;
+import ru.itmo.parser.Token;
 
 import java.util.List;
 
@@ -31,5 +31,10 @@ public abstract class AbstractNode implements Node {
     @Override
     public String toString() {
         return EMPTY_STRING;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o || o != null && getClass() == o.getClass();
     }
 }

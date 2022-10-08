@@ -1,16 +1,16 @@
-package org.example.node.assignment;
+package ru.itmo.parser.node.assignment;
 
-import org.example.Token;
-import org.example.node.AbstractNode;
-import org.example.node.Node;
-import org.example.node.value.Value;
+import ru.itmo.parser.Token;
+import ru.itmo.parser.node.AbstractNode;
+import ru.itmo.parser.node.Node;
+import ru.itmo.parser.node.value.Value;
 
 import java.util.List;
 
 public class ValidAssignment extends AbstractNode implements Assignment {
     private final Value<?> value;
 
-    public ValidAssignment(Value<?> value) {
+    public ValidAssignment(final Value<?> value) {
         this.value = value;
     }
 
@@ -29,10 +29,8 @@ public class ValidAssignment extends AbstractNode implements Assignment {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
         ValidAssignment assignment = (ValidAssignment) o;
-        return value.equals(assignment.value);
+        return super.equals(o) && value.equals(assignment.value);
     }
 }

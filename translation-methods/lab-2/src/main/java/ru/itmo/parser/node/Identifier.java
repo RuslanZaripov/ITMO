@@ -1,4 +1,4 @@
-package org.example.node;
+package ru.itmo.parser.node;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,9 +32,7 @@ public class Identifier extends AbstractNode {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
         Identifier that = (Identifier) o;
-        return name.equals(that.name);
+        return super.equals(o) && name.equals(that.name);
     }
 }

@@ -1,18 +1,16 @@
-package org.example;
+package ru.itmo.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Arrays;
 
-import static org.example.Token.*;
-
 public class LexicalAnalyzer {
-    InputStream is;
-    int curChar;
+    private final InputStream is;
     int curPos;
     Token curToken;
     String curStr;
+    private int curChar;
 
     public LexicalAnalyzer(InputStream is) throws ParseException {
         this.is = is;
@@ -36,10 +34,10 @@ public class LexicalAnalyzer {
     public void nextToken() throws ParseException {
         skipWhitespaces();
         curToken = switch (curChar) {
-            case ':' -> nextCharAndReturn(COLON);
-            case ';' -> nextCharAndReturn(SEMICOLON);
-            case '=' -> nextCharAndReturn(EQUAL);
-            case -1 -> nextCharAndReturn(EOF);
+            case ':' -> nextCharAndReturn(Token.COLON);
+            case ';' -> nextCharAndReturn(Token.SEMICOLON);
+            case '=' -> nextCharAndReturn(Token.EQUAL);
+            case -1 -> nextCharAndReturn(Token.EOF);
             default -> parseToken();
         };
     }
@@ -51,7 +49,7 @@ public class LexicalAnalyzer {
 
     private Token parseToken() throws ParseException {
         curStr = collectChars();
-        return Arrays.stream(values())
+        return Arrays.stream(Token.values())
                 .filter(token -> curStr.matches(token.getRegex()))
                 .findFirst()
                 .orElseThrow(() -> new ParseException("Unexpected token", curPos));

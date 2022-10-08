@@ -1,4 +1,4 @@
-package org.example.node;
+package ru.itmo.parser.node;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +26,9 @@ public class Code extends AbstractNode {
 
     @Override
     public String toString() {
-        return code.stream().map(Node::toString).collect(Collectors.joining("\n"));
+        return code.stream()
+                .map(Node::toString)
+                .collect(Collectors.joining("\n"));
     }
 
     @Override
@@ -46,9 +48,7 @@ public class Code extends AbstractNode {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
         Code that = (Code) o;
-        return code.equals(that.code);
+        return super.equals(o) && code.equals(that.code);
     }
 }

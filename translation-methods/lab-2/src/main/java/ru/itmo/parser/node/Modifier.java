@@ -1,17 +1,17 @@
-package org.example.node;
+package ru.itmo.parser.node;
 
-import org.example.Token;
+import ru.itmo.parser.Token;
 
 import java.util.List;
 
 public class Modifier extends AbstractNode {
     private final Token token;
 
-    public Modifier(Token token) {
-        switch (token) {
-            case VAR, VAL -> this.token = token;
+    public Modifier(final Token token) {
+        this.token = switch (token) {
+            case VAR, VAL -> token;
             default -> throw new IllegalArgumentException("Expected 'var' or 'val'");
-        }
+        };
     }
 
     @Override
@@ -35,10 +35,8 @@ public class Modifier extends AbstractNode {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
         Modifier that = (Modifier) o;
-        return token == that.token;
+        return super.equals(o) && token == that.token;
     }
 }

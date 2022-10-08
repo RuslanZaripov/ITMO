@@ -1,7 +1,7 @@
-package org.example;
+package ru.itmo.parser;
 
-import org.example.node.Node;
-import org.example.node.type.KotlinType;
+import ru.itmo.parser.node.Node;
+import ru.itmo.parser.node.type.KotlinType;
 
 import java.util.Arrays;
 import java.util.Collections;
