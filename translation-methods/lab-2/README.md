@@ -14,11 +14,11 @@ var a: Int; val c: Int = 2
 # Построение грамматики
 
 ```
-List -> List Stmt | Stmt.
-Stmt -> Modifier id Type Assignment ;.
-Modifier -> var | val.
-Type -> : type.
-Assignment -> = value | eps.
+List -> List Stmt | Stmt
+Stmt -> Modifier id Type Assignment ;
+Modifier -> var | val
+Type -> : type
+Assignment -> = value | eps
 ```
 
 # Условные обозначения
