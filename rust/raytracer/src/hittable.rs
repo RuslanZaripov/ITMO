@@ -1,26 +1,14 @@
 use crate::ray::Ray;
 use crate::Vec3;
-use crate::vec3::dot;
 use crate::material::Material;
 
 #[derive(Copy, Clone)]
 pub struct HitRecord<'a> {
-    pub t: f64,
-    pub p: Vec3,
+    pub factor: f64,
+    pub point: Vec3,
     pub normal: Vec3,
     pub material: &'a dyn Material,
     pub front_face: bool,
-}
-
-impl<'a> HitRecord<'a> {
-    pub fn new(t: f64, p: Vec3, normal: Vec3, material: &'a dyn Material, front_face: bool) -> HitRecord {
-        HitRecord { t, p, normal, material, front_face }
-    }
-
-    pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {
-        self.front_face = dot(&ray.dir, outward_normal) < 0.0;
-        self.normal = if self.front_face { *outward_normal } else { -(*outward_normal) };
-    }
 }
 
 pub trait Hittable {
@@ -32,8 +20,8 @@ pub struct HittableList {
 }
 
 impl HittableList {
-    pub fn new() -> HittableList {
-        HittableList { objects: Vec::new() }
+    pub fn new() -> Self {
+        Self { objects: Vec::new() }
     }
 
     pub fn clear(&mut self) {
@@ -51,7 +39,7 @@ impl Hittable for HittableList {
         let mut dist_to_closest = t_max;
         for object in &self.objects {
             if let Some(rec) = object.hit(ray, t_min, dist_to_closest) {
-                dist_to_closest = rec.t;
+                dist_to_closest = rec.factor;
                 hit_rec = Some(rec);
             }
         }

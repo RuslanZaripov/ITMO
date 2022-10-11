@@ -1,50 +1,50 @@
-use crate::{Ray, Vec3};
+use crate::{Color, Ray};
 use crate::hittable::HitRecord;
 use crate::vec3::{dot, random_unit_vector, reflect};
 
 pub trait Material {
-    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)>;
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)>;
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct Lambertian {
-    pub albedo: Vec3,
+    pub albedo: Color,
 }
 
 impl Lambertian {
-    pub fn new(albedo: Vec3) -> Lambertian {
-        Lambertian { albedo }
+    pub fn new(albedo: Color) -> Self {
+        Self { albedo }
     }
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)> {
+    fn scatter(&self, _ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
         let mut scatter_direction = hit_record.normal + random_unit_vector();
 
         if scatter_direction.near_zero() {
             scatter_direction = hit_record.normal;
         }
 
-        let scattered = Ray::new(hit_record.p, scatter_direction);
+        let scattered = Ray::new(hit_record.point, scatter_direction);
         Some((self.albedo, scattered))
     }
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct Metal {
-    pub albedo: Vec3,
+    pub albedo: Color,
 }
 
 impl Metal {
-    pub fn new(albedo: Vec3) -> Metal {
-        Metal { albedo }
+    pub fn new(albedo: Color) -> Self {
+        Self { albedo }
     }
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)> {
-        let reflected = reflect(&ray_in.dir.unit_vector(), &hit_record.normal);
-        let scattered = Ray::new(hit_record.p, reflected);
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Color, Ray)> {
+        let reflected = reflect(ray_in.dir.unit_vector(), hit_record.normal);
+        let scattered = Ray::new(hit_record.point, reflected);
         if dot(&scattered.dir, &hit_record.normal) > 0.0 {
             Some((self.albedo, scattered))
         } else {

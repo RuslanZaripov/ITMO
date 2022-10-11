@@ -1,5 +1,6 @@
 use crate::{Ray, Vec3};
 
+#[derive(Debug, Copy, Clone)]
 pub struct Camera {
     pub origin: Vec3,
     pub upper_left_corner: Vec3,
@@ -8,7 +9,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new() -> Camera {
+    pub fn new() -> Self {
         let ratio = 16.0 / 9.0;
         let viewport_height = 2.0;
         let viewport_width = ratio * viewport_height;
@@ -19,7 +20,7 @@ impl Camera {
         let vertical = Vec3::new(0.0, viewport_height, 0.0);
         let upper_left_corner = origin - horizontal / 2.0 + vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
 
-        Camera { origin, upper_left_corner, horizontal, vertical }
+        Self { origin, upper_left_corner, horizontal, vertical }
     }
 
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {

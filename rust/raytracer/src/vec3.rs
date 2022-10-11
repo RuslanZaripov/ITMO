@@ -9,6 +9,8 @@ pub struct Vec3 {
     pub z: f64,
 }
 
+pub type Color = Vec3;
+
 // todo: change name to Vec3f64 or make generic
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
@@ -128,6 +130,6 @@ pub fn random_unit_vector() -> Vec3 {
     random_in_unit_sphere().unit_vector()
 }
 
-pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-    *v - 2.0 * dot(v, n) * *n
+pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v - 2.0 * dot(&v, &n) * n
 }
