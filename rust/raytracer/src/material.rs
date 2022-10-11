@@ -1,12 +1,6 @@
-use crate::Vec3;
+use crate::{Ray, Vec3};
+use crate::hittable::HitRecord;
 
-#[derive(Debug, Copy, Clone)]
-pub struct Material {
-    pub color: Vec3,
-}
-
-impl Material {
-    pub fn new(color: Vec3) -> Material {
-        Material { color }
-    }
+trait Material {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)>;
 }
