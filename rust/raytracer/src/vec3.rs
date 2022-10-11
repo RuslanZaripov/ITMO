@@ -1,4 +1,6 @@
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
+use crate::get_random_double;
+use crate::utils::get_random_double_in_range;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -27,6 +29,18 @@ impl Vec3 {
 
     pub fn unit_vector(&self) -> Self {
         *self / self.length()
+    }
+
+    pub fn random() -> Self {
+        Self::new(get_random_double(), get_random_double(), get_random_double())
+    }
+
+    pub fn random_in_range(min: f64, max: f64) -> Self {
+        Self::new(
+            get_random_double_in_range(min, max),
+            get_random_double_in_range(min, max),
+            get_random_double_in_range(min, max),
+        )
     }
 }
 
@@ -93,5 +107,14 @@ impl Neg for Vec3 {
 impl AddAssign for Vec3 {
     fn add_assign(&mut self, other: Self) {
         *self = Self::new(self.x + other.x, self.y + other.y, self.z + other.z);
+    }
+}
+
+pub fn random_in_unit_sphere() -> Vec3 {
+    loop {
+        let p = Vec3::random_in_range(-1.0, 1.0);
+        if p.length() < 1.0 {
+            return p;
+        }
     }
 }
