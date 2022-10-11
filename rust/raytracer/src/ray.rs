@@ -1,6 +1,4 @@
-pub mod vec3;
-
-use vec3::Vec3;
+use crate::Vec3;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ray {
