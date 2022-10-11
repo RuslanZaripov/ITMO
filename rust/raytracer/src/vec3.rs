@@ -42,6 +42,11 @@ impl Vec3 {
             get_random_double_in_range(min, max),
         )
     }
+
+    pub fn near_zero(&self) -> bool {
+        const S: f64 = 1e-8;
+        self.x.abs() < S && self.y.abs() < S && self.z.abs() < S
+    }
 }
 
 pub fn dot(left: &Vec3, right: &Vec3) -> f64 {
@@ -117,4 +122,12 @@ pub fn random_in_unit_sphere() -> Vec3 {
             return p;
         }
     }
+}
+
+pub fn random_unit_vector() -> Vec3 {
+    random_in_unit_sphere().unit_vector()
+}
+
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    *v - 2.0 * dot(v, n) * *n
 }

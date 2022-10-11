@@ -1,18 +1,20 @@
 use crate::ray::Ray;
 use crate::Vec3;
 use crate::vec3::dot;
+use crate::material::Material;
 
-#[derive(Debug, Copy, Clone)]
-pub struct HitRecord {
+#[derive(Copy, Clone)]
+pub struct HitRecord<'a> {
     pub t: f64,
     pub p: Vec3,
     pub normal: Vec3,
-    pub front_face: bool
+    pub material: &'a dyn Material,
+    pub front_face: bool,
 }
 
-impl HitRecord {
-    pub fn new(t: f64, p: Vec3, normal: Vec3, front_face: bool) -> HitRecord {
-        HitRecord { t, p, normal, front_face }
+impl<'a> HitRecord<'a> {
+    pub fn new(t: f64, p: Vec3, normal: Vec3, material: &'a dyn Material, front_face: bool) -> HitRecord {
+        HitRecord { t, p, normal, material, front_face }
     }
 
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {

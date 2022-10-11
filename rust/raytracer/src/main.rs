@@ -3,9 +3,10 @@ use image::{ImageBuffer, Rgb};
 use crate::camera::Camera;
 use crate::equation::Equation;
 use crate::hittable::{Hittable, HittableList};
+use crate::material::{Lambertian, Metal};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use crate::vec3::{random_in_unit_sphere, Vec3};
+use crate::vec3::Vec3;
 use crate::utils::get_random_double;
 
 pub mod equation;
@@ -26,8 +27,16 @@ fn main() {
     let max_depth = 50;
 
     let mut scene: HittableList = HittableList::new();
-    scene.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5));
-    scene.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0));
+
+    let material_ground: Lambertian = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
+    let material_center: Lambertian = Lambertian::new(Vec3::new(0.7, 0.3, 0.3));
+    let material_left: Metal   = Metal::new(Vec3::new(0.8, 0.8, 0.8));
+    let material_right: Metal = Metal::new(Vec3::new(0.8, 0.6, 0.2));
+
+    scene.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, material_ground));
+    scene.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, material_center));
+    scene.add(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, material_left));
+    scene.add(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, material_right));
 
     let camera = Camera::new();
 
@@ -78,8 +87,11 @@ pub fn cast_ray(ray: &Ray, scene: &HittableList, depth: &u32) -> Vec3 {
     }
     match scene.hit(ray, 0.001, f64::MAX) {
         Some(rec) => {
-            let target = rec.p + rec.normal + random_in_unit_sphere();
-            0.5 * cast_ray(&Ray::new(rec.p, target - rec.p), scene, &(depth - 1))
+            return match rec.material.scatter(ray, &rec) {
+                Some((attenuation, scattered)) =>
+                    attenuation * cast_ray(&scattered, scene, &(depth - 1)),
+                None => Vec3::new(0.0, 0.0, 0.0)
+            }
         }
         None => {
             let unit_dir = ray.dir.unit_vector();
