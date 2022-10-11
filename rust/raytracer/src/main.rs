@@ -6,7 +6,7 @@ use crate::hittable::{Hittable, HittableList};
 use crate::material::{Lambertian, Metal};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
-use crate::vec3::{Color, Vec3};
+use crate::vec3::{BLACK, Color, Vec3};
 use crate::utils::get_random_double;
 
 pub mod equation;
@@ -54,7 +54,7 @@ pub fn render(image: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
 ) {
     let (width, height) = image.dimensions();
     for (i, j, pixel) in image.enumerate_pixels_mut() {
-        let mut color_pixel = Color::new(0.0, 0.0, 0.0);
+        let mut color_pixel = BLACK;
         for _ in 0..*samples_per_pixel {
             let u = (i as f64 + get_random_double()) / (width - 1) as f64;
             let v = (j as f64 + get_random_double()) / (height - 1) as f64;
@@ -83,14 +83,14 @@ fn clamp(x: f64, min: f64, max: f64) -> f64 {
 
 pub fn cast_ray(ray: &Ray, scene: &HittableList, depth: &u32) -> Color {
     if *depth == 0 {
-        return Color::new(0.0, 0.0, 0.0);
+        return BLACK;
     }
     match scene.hit(ray, 0.001, f64::MAX) {
         Some(rec) => {
             return match rec.material.scatter(ray, &rec) {
                 Some((attenuation, scattered)) =>
                     attenuation * cast_ray(&scattered, scene, &(depth - 1)),
-                None => Color::new(0.0, 0.0, 0.0)
+                None => BLACK
             }
         }
         None => {
