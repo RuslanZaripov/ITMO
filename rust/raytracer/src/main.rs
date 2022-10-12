@@ -3,7 +3,7 @@ use image::{ImageBuffer, Rgb};
 use crate::camera::Camera;
 use crate::equation::Equation;
 use crate::hittable::{Hittable, HittableList};
-use crate::material::{Lambertian, Metal};
+use crate::material::{Dielectric, Lambertian, Metal};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3::{BLACK, Color, Vec3};
@@ -30,8 +30,8 @@ fn main() {
 
     let material_ground: Lambertian = Lambertian::new(Color::new(0.8, 0.8, 0.0));
     let material_center: Lambertian = Lambertian::new(Color::new(0.7, 0.3, 0.3));
-    let material_left: Metal   = Metal::new(Color::new(0.8, 0.8, 0.8));
-    let material_right: Metal = Metal::new(Color::new(0.8, 0.6, 0.2));
+    let material_left: Dielectric = Dielectric::new(1.5);
+    let material_right: Metal = Metal::new(Color::new(0.8, 0.6, 0.2), 1.0);
 
     scene.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, material_ground));
     scene.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, material_center));

@@ -7,7 +7,7 @@ pub struct HitRecord<'a> {
     pub factor: f64,
     pub point: Vec3,
     pub normal: Vec3,
-    pub material: &'a dyn Material,
+    pub material: &'a (dyn Material + 'a),
     pub front_face: bool,
 }
 
@@ -35,14 +35,14 @@ impl HittableList {
 
 impl Hittable for HittableList {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut hit_rec = None;
+        let mut hit_record = None;
         let mut dist_to_closest = t_max;
         for object in &self.objects {
             if let Some(rec) = object.hit(ray, t_min, dist_to_closest) {
                 dist_to_closest = rec.factor;
-                hit_rec = Some(rec);
+                hit_record = Some(rec);
             }
         }
-        hit_rec
+        hit_record
     }
 }

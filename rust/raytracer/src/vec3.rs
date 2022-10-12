@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 use crate::get_random_double;
-use crate::utils::get_random_double_in_range;
+use crate::utils::{get_random_double_in_range, sq};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -133,4 +133,11 @@ pub fn random_unit_vector() -> Vec3 {
 
 pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     v - 2.0 * dot(&v, &n) * n
+}
+
+pub fn refract(ray: Vec3, normal: Vec3, refractive_index_ratio: f64) -> Vec3 {
+    let cos_theta = dot(&-ray, &normal).min(1.0);
+    let r_perpendicular = refractive_index_ratio * (ray + cos_theta * normal);
+    let r_parallel = -((1.0 - sq(r_perpendicular.length())).abs()).sqrt() * normal;
+    r_perpendicular + r_parallel
 }
