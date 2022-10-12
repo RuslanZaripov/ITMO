@@ -22,13 +22,24 @@ impl<M: Material> Sphere<M> {
         let outward_normal = (point - self.center) / self.radius;
         let front_face = dot(&ray.dir, &outward_normal) < 0.0;
         let normal = if front_face { outward_normal } else { -outward_normal };
+        let (u, v) = self.get_sphere_coordinates(&normal);
         return Some(HitRecord {
             factor: root,
             point,
             normal,
             material: &self.material,
-            front_face
+            front_face,
+            u,
+            v
         });
+    }
+
+    fn get_sphere_coordinates(&self, point: &Vec3) -> (f64, f64) {
+        let theta = (-point.y).acos();
+        let phi = (-point.z).atan2(point.x) + std::f64::consts::PI;
+        let u = phi / (2.0 * std::f64::consts::PI);
+        let v = theta / std::f64::consts::PI;
+        (u, v)
     }
 }
 

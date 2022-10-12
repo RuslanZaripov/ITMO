@@ -3,9 +3,10 @@ use image::{ImageBuffer, Rgb};
 use crate::camera::Camera;
 use crate::equation::Equation;
 use crate::hittable::{Hittable, HittableList};
-use crate::material::{Dielectric, Lambertian, Metal};
+use crate::material::{Dielectric, Lambertian, Light, Metal};
 use crate::ray::Ray;
 use crate::sphere::Sphere;
+use crate::texture::SolidColor;
 use crate::vec3::{BLACK, Color, Vec3};
 use crate::utils::get_random_double;
 
@@ -17,6 +18,7 @@ pub mod vec3;
 pub mod material;
 pub mod camera;
 pub mod utils;
+pub mod texture;
 
 #[allow(unused_variables)]
 fn main() {
@@ -28,10 +30,13 @@ fn main() {
 
     let mut scene: HittableList = HittableList::new();
 
-    let material_ground: Lambertian = Lambertian::new(Color::new(0.8, 0.8, 0.0));
-    let material_center: Lambertian = Lambertian::new(Color::new(0.7, 0.3, 0.3));
+    let material_ground: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.8, 0.8, 0.0));
+    let material_center: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.7, 0.3, 0.3));
     let material_left: Dielectric = Dielectric::new(1.5);
-    let material_right: Metal = Metal::new(Color::new(0.8, 0.6, 0.2), 1.0);
+    let material_right: Metal<SolidColor> = Metal::new(SolidColor::new(0.8, 0.6, 0.2), 1.0);
+
+    let light: Light<SolidColor> = Light::new(SolidColor::new(4.0, 4.0, 4.0));
+    scene.add(Sphere::new(Vec3::new(0.0, 3.0, 0.0), 2.0, light));
 
     scene.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, material_ground));
     scene.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, material_center));
@@ -87,10 +92,11 @@ pub fn cast_ray(ray: &Ray, scene: &HittableList, depth: &u32) -> Color {
     }
     match scene.hit(ray, 0.001, f64::MAX) {
         Some(rec) => {
+            let emitted = rec.material.emitted(rec.u, rec.v, rec.point);
             return match rec.material.scatter(ray, &rec) {
                 Some((attenuation, scattered)) =>
-                    attenuation * cast_ray(&scattered, scene, &(depth - 1)),
-                None => BLACK
+                    emitted + attenuation * cast_ray(&scattered, scene, &(depth - 1)),
+                None => emitted
             }
         }
         None => {

@@ -9,6 +9,8 @@ pub struct HitRecord<'a> {
     pub normal: Vec3,
     pub material: &'a (dyn Material + 'a),
     pub front_face: bool,
+    pub u: f64,
+    pub v: f64,
 }
 
 pub trait Hittable {
