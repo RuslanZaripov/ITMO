@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use image::{ImageBuffer, Rgb};
 
 use crate::camera::Camera;
@@ -28,22 +29,31 @@ fn main() {
     let samples_per_pixel = 100;
     let max_depth = 50;
 
+    let r = (PI / 4.0).cos();
     let mut scene: HittableList = HittableList::new();
 
-    let material_ground: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.8, 0.8, 0.0));
-    let material_center: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.7, 0.3, 0.3));
-    let material_left: Dielectric = Dielectric::new(1.5);
-    let material_right: Metal<SolidColor> = Metal::new(SolidColor::new(0.8, 0.6, 0.2), 1.0);
+    let material_left: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.0, 0.0, 1.0));
+    let material_right: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(1.0, 0.0, 0.0));
 
-    let light: Light<SolidColor> = Light::new(SolidColor::new(4.0, 4.0, 4.0));
-    scene.add(Sphere::new(Vec3::new(0.0, 3.0, 0.0), 2.0, light));
+    scene.add(Sphere::new(Vec3::new(-r, 0.0, -1.0), r, material_left));
+    scene.add(Sphere::new(Vec3::new(r, 0.0, -1.0), r, material_right));
 
-    scene.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, material_ground));
-    scene.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, material_center));
-    scene.add(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, material_left));
-    scene.add(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, material_right));
+    // let material_ground: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.8, 0.8, 0.0));
+    // let material_center: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.7, 0.3, 0.3));
+    // let material_left: Dielectric = Dielectric::new(1.5);
+    // let material_right: Metal<SolidColor> = Metal::new(SolidColor::new(0.8, 0.6, 0.2), 1.0);
+    //
+    // let light: Light<SolidColor> = Light::new(SolidColor::new(4.0, 4.0, 4.0));
+    // scene.add(Sphere::new(Vec3::new(0.0, 3.0, 0.0), 2.0, light));
+    //
+    // scene.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, material_ground));
+    // scene.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, material_center));
+    // scene.add(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, material_left));
+    // scene.add(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, material_right));
 
-    let camera = Camera::new();
+    // let camera = Camera::new();
+
+    let camera = Camera::new(90.0, ratio);
 
     let mut img = image::ImageBuffer::new(width, height);
 
