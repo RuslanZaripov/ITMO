@@ -34,15 +34,15 @@ public class LexicalAnalyzer {
     public void nextToken() throws ParseException {
         skipWhitespaces();
         curToken = switch (curChar) {
-            case ':' -> nextCharAndReturn(Token.COLON);
-            case ';' -> nextCharAndReturn(Token.SEMICOLON);
-            case '=' -> nextCharAndReturn(Token.EQUAL);
-            case -1 -> nextCharAndReturn(Token.EOF);
+            case ':' -> parseChar(Token.COLON);
+            case ';' -> parseChar(Token.SEMICOLON);
+            case '=' -> parseChar(Token.EQUAL);
+            case -1 -> parseChar(Token.EOF);
             default -> parseToken();
         };
     }
 
-    private Token nextCharAndReturn(Token token) throws ParseException {
+    private Token parseChar(Token token) throws ParseException {
         nextChar();
         return token;
     }
