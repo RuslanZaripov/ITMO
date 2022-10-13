@@ -6,9 +6,11 @@
 Предусмотреть инициализацию только для типа Int числом, выражения рассматривать не требуется. \
 Используйте один терминал для всех имен переменных и имен типов. \
 Используйте один терминал для ключевого слова var(не три ‘v’, ‘a’, ‘r’). \
-Пример: 
+Пример:
+
 ```kotlin
-var a: Int; val c: Int = 2
+var a: Int;
+val c: Int = 2
 ```
 
 # Построение грамматики
@@ -50,3 +52,14 @@ Assignment -> = value | eps
 | _Modifier_       | var, val      | id            |
 | _Type_           | :             | =             |
 | _Assignment_     | =, eps        | ;             |
+
+# Пример работы
+
+```kotlin
+var d9: Int;
+val c32: Int = 2;
+var str: String;
+var num: Int = 128; 
+```
+
+![parse tree](./src/main/resources/graph/tree.png)
