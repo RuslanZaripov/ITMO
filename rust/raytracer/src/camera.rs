@@ -1,4 +1,5 @@
 use crate::{Ray, Vec3};
+use crate::vec3::cross;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Camera {
@@ -9,23 +10,25 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(vfov: f64, ratio: f64) -> Self {
+    pub fn new(look_from: Vec3, look_at: Vec3, vup: Vec3, vfov: f64, ratio: f64) -> Self {
         let theta = vfov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h;
         let viewport_width = ratio * viewport_height;
 
-        let focal_length = 1.0;
+        let w = (look_from - look_at).unit_vector();
+        let u = cross(&vup, &w).unit_vector();
+        let v = cross(&w, &u);
 
-        let origin = Vec3::new(0.0, 0.0, 0.0);
-        let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-        let vertical = Vec3::new(0.0, viewport_height, 0.0);
-        let upper_left_corner = origin - horizontal / 2.0 + vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+        let origin = look_from;
+        let horizontal = viewport_width * u;
+        let vertical = viewport_height * v;
+        let upper_left_corner = origin - horizontal / 2.0 + vertical / 2.0 - w;
 
         Self { origin, upper_left_corner, horizontal, vertical }
     }
 
-    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
-        Ray::new(self.origin, self.upper_left_corner + self.horizontal * u + -self.vertical * v - self.origin)
+    pub fn get_ray(&self, t1: f64, t2: f64) -> Ray {
+        Ray::new(self.origin, self.upper_left_corner + self.horizontal * t1 + -self.vertical * t2 - self.origin)
     }
 }

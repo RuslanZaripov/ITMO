@@ -22,14 +22,6 @@ impl Vec3 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
-    pub fn cross(&self, other: &Self) -> Self {
-        Self::new(
-            self.y * other.z - self.z * other.y,
-            self.z * other.x - self.x * other.z,
-            self.x * other.y - self.y * other.x,
-        )
-    }
-
     pub fn unit_vector(&self) -> Self {
         *self / self.length()
     }
@@ -54,6 +46,14 @@ impl Vec3 {
 
 pub fn dot(left: &Vec3, right: &Vec3) -> f64 {
     return left.x * right.x + left.y * right.y + left.z * right.z
+}
+
+pub fn cross(left: &Vec3, right: &Vec3) -> Vec3 {
+    Vec3::new(
+        left.y * right.z - left.z * right.y,
+        left.z * right.x - left.x * right.z,
+        left.x * right.y - left.y * right.x,
+    )
 }
 
 impl Add for Vec3 {
@@ -131,6 +131,7 @@ pub fn random_unit_vector() -> Vec3 {
     random_in_unit_sphere().unit_vector()
 }
 
+// todo: learn more about auto deref
 pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     v - 2.0 * dot(&v, &n) * n
 }
