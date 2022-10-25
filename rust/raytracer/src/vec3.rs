@@ -42,6 +42,15 @@ impl Vec3 {
         const S: f64 = 1e-8;
         self.x.abs() < S && self.y.abs() < S && self.z.abs() < S
     }
+
+    pub fn at(&self, i: usize) -> f64 {
+        match i {
+            0 => self.x,
+            1 => self.y,
+            2 => self.z,
+            _ => panic!("Index out of bounds"),
+        }
+    }
 }
 
 pub fn dot(left: &Vec3, right: &Vec3) -> f64 {
@@ -93,6 +102,14 @@ impl Mul<Vec3> for f64 {
 
     fn mul(self, other: Vec3) -> Self::Output {
         Vec3::new(self * other.x, self * other.y, self * other.z)
+    }
+}
+
+impl Div<Vec3> for Vec3 {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self::Output {
+        Self::new(self.x / other.x, self.y / other.y, self.z / other.z)
     }
 }
 
