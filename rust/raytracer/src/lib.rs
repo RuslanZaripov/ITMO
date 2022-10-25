@@ -1,5 +1,10 @@
+pub mod vec3;
+pub mod utils;
+
 #[cfg(test)]
 mod tests {
+    use crate::vec3::{cross, dot, Vec3};
+
     #[test]
     fn test_vec3_add() {
         let vec1 = Vec3::new(1.0, 5.0, 7.0);
@@ -39,26 +44,29 @@ mod tests {
     fn test_vec3_dot() {
         let vec1 = Vec3::new(1.0, 5.0, 7.0);
         let vec2 = Vec3::new(-5.0, 10.0, 0.0);
-        assert_eq!(-45.0, dot(&vec1, &vec2));
+        assert_eq!(45.0, dot(&vec1, &vec2));
     }
 
     #[test]
     fn test_vec3_cross() {
         let vec1 = Vec3::new(1.0, 5.0, 7.0);
         let vec2 = Vec3::new(-5.0, 10.0, 0.0);
-        assert_eq!(Vec3::new(50.0, -5.0, -50.0), cross(&vec1, &vec2));
+        assert_eq!(Vec3::new(-70.0, -35.0, 35.0), cross(&vec1, &vec2));
     }
 
     #[test]
     fn test_vec3_length() {
         let vec1 = Vec3::new(1.0, 5.0, 7.0);
-        assert_eq!(9.055385138137417, vec1.length());
+        assert_eq!(8.660254037844387, vec1.length());
     }
 
     #[test]
     fn test_vec3_unit() {
         let vec1 = Vec3::new(1.0, 5.0, 7.0);
-        assert_eq!(Vec3::new(0.1091089451179964, 0.545544725589982, 0.7707723627849813), vec1.unit());
+        assert_eq!(
+            Vec3::new(0.11547005383792514, 0.5773502691896257, 0.808290376865476),
+            vec1.unit_vector()
+        );
     }
 
     #[test]
@@ -92,32 +100,5 @@ mod tests {
     fn test_vec3_index_mut_out_of_bounds() {
         let mut vec1 = Vec3::new(1.0, 5.0, 7.0);
         vec1[3] = 2.0;
-    }
-
-    #[test]
-    fn test_vec3_from_array() {
-        let array = [1.0, 5.0, 7.0];
-        let vec1 = Vec3::from(array);
-        assert_eq!(1.0, vec1[0]);
-        assert_eq!(5.0, vec1[1]);
-        assert_eq!(7.0, vec1[2]);
-    }
-
-    #[test]
-    fn test_vec3_from_slice() {
-        let slice = &[1.0, 5.0, 7.0];
-        let vec1 = Vec3::from(slice);
-        assert_eq!(1.0, vec1[0]);
-        assert_eq!(5.0, vec1[1]);
-        assert_eq!(7.0, vec1[2]);
-    }
-
-    #[test]
-    fn test_vec3_from_vec() {
-        let vec = vec![1.0, 5.0, 7.0];
-        let vec1 = Vec3::from(vec);
-        assert_eq!(1.0, vec1[0]);
-        assert_eq!(5.0, vec1[1]);
-        assert_eq!(7.0, vec1[2]);
     }
 }
