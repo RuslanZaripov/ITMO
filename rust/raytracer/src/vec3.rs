@@ -10,6 +10,7 @@ pub struct Vec3 {
 
 pub type Color = Vec3;
 pub const BLACK: Color = Color { x: 0.0, y: 0.0, z: 0.0 };
+pub const WHITE: Color = Color { x: 255.0, y: 255.0, z: 255.0 };
 
 // todo: change name to Vec3f64 or make generic
 impl Vec3 {
