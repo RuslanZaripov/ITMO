@@ -3,32 +3,77 @@ use crate::aabb::AABB;
 use crate::hittable::HitRecord;
 use crate::material::Material;
 
+pub enum PlaneType {
+    XY,
+    XZ,
+    YZ,
+}
+
 pub struct Plane<M: Material> {
-    pub x0: f64,
-    pub x1: f64,
-    pub y0: f64,
-    pub y1: f64,
-    pub z: f64,
-    pub material: M
+    pub plane_type: PlaneType,
+    pub a_dim: DimConfig,
+    pub b_dim: DimConfig,
+    pub p: f64,
+    pub p_index: usize,
+    pub material: M,
+}
+
+pub struct DimConfig {
+    l_bound: f64,
+    r_bound: f64,
+    index: usize,
+}
+
+impl DimConfig {
+    fn new(l_bound: f64, r_bound: f64, index: usize) -> Self {
+        Self { l_bound, r_bound, index }
+    }
+
+    fn in_bounds(&self, point: &Vec3) -> bool {
+        self.l_bound <= point.at(self.index) && point.at(self.index) <= self.r_bound
+    }
+
+    fn coord(&self, point: &Vec3) -> f64 {
+        (point.at(self.index) - self.l_bound) / (self.r_bound - self.l_bound)
+    }
 }
 
 impl<M: Material> Plane<M> {
-    pub fn new(x0: f64, x1: f64, y0: f64, y1: f64, z: f64, material: M) -> Self {
-        Self { x0, x1, y0, y1, z, material }
+    pub fn new(
+        plane_type: PlaneType,
+        a0: f64, a1: f64,
+        b0: f64, b1: f64,
+        p: f64,
+        material: M,
+    ) -> Self {
+        let (a_index, b_index, p_index) = match plane_type {
+            PlaneType::XY => (0, 1, 2),
+            PlaneType::XZ => (0, 2, 1),
+            PlaneType::YZ => (1, 2, 0),
+        };
+        Self {
+            plane_type,
+            a_dim: DimConfig::new(a0, a1, a_index),
+            b_dim: DimConfig::new(b0, b1, b_index),
+            p,
+            p_index,
+            material,
+        }
     }
 
-    fn in_bounds(&self, ray: &Vec3) -> bool {
-        self.x0 <= ray.x && ray.x <= self.x1 && self.y0 <= ray.y && ray.y <= self.y1
+    fn in_bounds(&self, point: &Vec3) -> bool {
+        self.a_dim.in_bounds(point) && self.b_dim.in_bounds(point)
+    }
+
+    fn factor(&self, ray: &Ray) -> f64 {
+        (self.p - ray.origin.at(self.p_index)) / ray.dir.at(self.p_index)
     }
 }
 
 impl<M: Material> Hittable for Plane<M> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let t = (self.z - ray.origin.z) / ray.dir.z;
-        if t < t_min || t > t_max {
-            return None;
-        }
-        if !self.in_bounds(&ray.at(t)) {
+        let t = self.factor(ray);
+        if !self.in_bounds(&ray.at(t)) || !(t_min <= t && t <= t_max) {
             return None;
         }
         self.get_hit_record(ray, t)
@@ -36,19 +81,21 @@ impl<M: Material> Hittable for Plane<M> {
 
     fn bounding_box(&self) -> Option<AABB> {
         Some(AABB::new(
-            Vec3::new(self.x0, self.y0, self.z - 0.0001),
-            Vec3::new(self.x1, self.y1, self.z + 0.0001),
+            Vec3::new(self.a_dim.l_bound, self.b_dim.l_bound, self.p - 0.0001),
+            Vec3::new(self.a_dim.r_bound, self.b_dim.r_bound, self.p + 0.0001),
         ))
     }
 
     fn get_normal(&self, _point: &Vec3) -> Vec3 {
-        Vec3::new(0.0, 0.0, 1.0)
+        match self.plane_type {
+            PlaneType::XY => Vec3::new(0.0, 0.0, 1.0),
+            PlaneType::XZ => Vec3::new(0.0, 1.0, 0.0),
+            PlaneType::YZ => Vec3::new(1.0, 0.0, 0.0),
+        }
     }
 
     fn get_coordinates(&self, point: &Vec3) -> (f64, f64) {
-        let u = (point.x - self.x0) / (self.x1 - self.x0);
-        let v = (point.y - self.y0) / (self.y1 - self.y0);
-        (u, v)
+        (self.a_dim.coord(point), self.b_dim.coord(point))
     }
 
     fn get_material(&self) -> &dyn Material {

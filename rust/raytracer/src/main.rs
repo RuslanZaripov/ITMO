@@ -10,7 +10,7 @@ use crate::sphere::Sphere;
 use crate::texture::SolidColor;
 use crate::vec3::{BLACK, Color, Vec3};
 use crate::utils::get_random_double;
-use crate::plane::Plane;
+use crate::plane::{Plane, PlaneType};
 
 pub mod equation;
 pub mod sphere;
@@ -27,20 +27,20 @@ pub mod aabb;
 #[allow(unused_variables, dead_code)]
 fn main() {
     let ratio = 16.0 / 9.0;
-    let width = 1000;
+    let width = 2500;
     let height = (width as f64 / ratio) as u32;
-    let samples_per_pixel = 10000;
+    let samples_per_pixel = 100;
     let max_depth = 50;
-    let color = BLACK;
+    let background_color = BLACK;
 
     let r = (PI / 4.0).cos();
 
-    // let (scene, camera) = scene1(ratio);
-    let (scene, camera) = scene2(ratio);
+    let (scene, camera) = scene1(ratio);
+    // let (scene, camera) = scene2(ratio);
 
     let mut img = image::ImageBuffer::new(width, height);
 
-    render(&mut img, &scene, &camera, color, &samples_per_pixel, &max_depth);
+    render(&mut img, &scene, &camera, background_color, &samples_per_pixel, &max_depth);
     img.save("images/img.png").unwrap();
 }
 
@@ -57,7 +57,7 @@ fn scene2(ratio: f64) -> (HittableList, Camera) {
     scene.add(Sphere::new(Vec3::new(0.0, 2.0, 0.0), 2.0, material));
 
     let light: Light<SolidColor> = Light::new(SolidColor::new(4.0, 4.0, 4.0));
-    scene.add(Plane::new(3.0, 5.0, 1.0, 3.0, -2.0, light));
+    scene.add(Plane::new(PlaneType::XY, 3.0, 5.0, 1.0, 3.0, -2.0, light));
 
     (scene, camera)
 }
