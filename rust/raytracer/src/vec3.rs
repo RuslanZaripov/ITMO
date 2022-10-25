@@ -1,8 +1,7 @@
-use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
-use crate::get_random_double;
-use crate::utils::{get_random_double_in_range, sq};
+use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Sub};
+use crate::utils::{get_random_double, get_random_double_in_range, sq};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -19,7 +18,7 @@ impl Vec3 {
     }
 
     pub fn length(&self) -> f64 {
-        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+        f64::sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
     }
 
     pub fn unit_vector(&self) -> Self {
@@ -41,15 +40,6 @@ impl Vec3 {
     pub fn near_zero(&self) -> bool {
         const S: f64 = 1e-8;
         self.x.abs() < S && self.y.abs() < S && self.z.abs() < S
-    }
-
-    pub fn at(&self, i: usize) -> f64 {
-        match i {
-            0 => self.x,
-            1 => self.y,
-            2 => self.z,
-            _ => panic!("Index out of bounds"),
-        }
     }
 }
 
@@ -135,6 +125,30 @@ impl AddAssign for Vec3 {
     }
 }
 
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, i: usize) -> &Self::Output {
+        match i {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Index out of bounds"),
+        }
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    fn index_mut(&mut self, i: usize) -> &mut Self::Output {
+        match i {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("Index out of bounds"),
+        }
+    }
+}
+
 pub fn random_in_unit_sphere() -> Vec3 {
     loop {
         let p = Vec3::random_in_range(-1.0, 1.0);
@@ -156,6 +170,6 @@ pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
 pub fn refract(ray: Vec3, normal: Vec3, refractive_index_ratio: f64) -> Vec3 {
     let cos_theta = dot(&-ray, &normal).min(1.0);
     let r_perpendicular = refractive_index_ratio * (ray + cos_theta * normal);
-    let r_parallel = -((1.0 - sq(r_perpendicular.length())).abs()).sqrt() * normal;
+    let r_parallel = -(f64::abs(1.0 - sq(r_perpendicular.length()))).sqrt() * normal;
     r_perpendicular + r_parallel
 }

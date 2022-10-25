@@ -14,8 +14,8 @@ impl AABB {
         let t0 = (self.min - ray.origin) / ray.dir;
         let t1 = (self.max - ray.origin) / ray.dir;
         for i in 0..3 {
-            let t_min = f64::max(f64::min(t0.at(i), t1.at(i)), t_min);
-            let t_max = f64::min(f64::max(t0.at(i), t1.at(i)), t_max);
+            let t_min = f64::max(f64::min(t0[i], t1[i]), t_min);
+            let t_max = f64::min(f64::max(t0[i], t1[i]), t_max);
             if t_max <= t_min {
                 return false;
             }

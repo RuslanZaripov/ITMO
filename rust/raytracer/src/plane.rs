@@ -30,11 +30,11 @@ impl DimConfig {
     }
 
     fn in_bounds(&self, point: &Vec3) -> bool {
-        self.l_bound <= point.at(self.index) && point.at(self.index) <= self.r_bound
+        self.l_bound <= point[self.index] && point[self.index] <= self.r_bound
     }
 
     fn coord(&self, point: &Vec3) -> f64 {
-        (point.at(self.index) - self.l_bound) / (self.r_bound - self.l_bound)
+        (point[self.index] - self.l_bound) / (self.r_bound - self.l_bound)
     }
 }
 
@@ -66,7 +66,7 @@ impl<M: Material> Plane<M> {
     }
 
     fn factor(&self, ray: &Ray) -> f64 {
-        (self.p - ray.origin.at(self.p_index)) / ray.dir.at(self.p_index)
+        (self.p - ray.origin[self.p_index]) / ray.dir[self.p_index]
     }
 }
 
