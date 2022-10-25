@@ -53,6 +53,7 @@ impl LinearEquation {
         if self.a == 0.0 {
             return None
         }
-        Some((self.x - self.b) / self.a)
+        let denominator = 1.0 / self.a;
+        Some((self.x - self.b) * denominator)
     }
 }
