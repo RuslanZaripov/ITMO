@@ -27,7 +27,7 @@ pub mod aabb;
 #[allow(unused_variables, dead_code)]
 fn main() {
     let ratio = 16.0 / 9.0;
-    let width = 2500;
+    let width = 7500;
     let height = (width as f64 / ratio) as u32;
     let samples_per_pixel = 100;
     let max_depth = 50;
@@ -35,8 +35,9 @@ fn main() {
 
     let r = (PI / 4.0).cos();
 
-    let (scene, camera) = scene1(ratio);
+    // let (scene, camera) = scene1(ratio);
     // let (scene, camera) = scene2(ratio);
+    let (scene, camera) = scene3(ratio);
 
     let mut img = image::ImageBuffer::new(width, height);
 
@@ -58,6 +59,31 @@ fn scene2(ratio: f64) -> (HittableList, Camera) {
 
     let light: Light<SolidColor> = Light::new(SolidColor::new(4.0, 4.0, 4.0));
     scene.add(Plane::new(PlaneType::XY, 3.0, 5.0, 1.0, 3.0, -2.0, light));
+
+    (scene, camera)
+}
+
+// same as scene 2 but under small spheres lies PLain from plane.rs
+fn scene3(ratio: f64) -> (HittableList, Camera) {
+    let camera = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        50.0, ratio);
+    let mut scene: HittableList = HittableList::new();
+
+    let material_ground: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.8, 0.8, 0.0));
+    let material_center: Lambertian<SolidColor> = Lambertian::new(SolidColor::new(0.1, 0.2, 0.5));
+    let material_left: Dielectric = Dielectric::new(1.5);
+    let material_right: Metal<SolidColor> = Metal::new(SolidColor::new(0.8, 0.6, 0.2), 0.0);
+
+    scene.add(Plane::new(PlaneType::XZ, -2.0, 4.0, -3.50, 0.0, -0.75, material_ground));
+    scene.add(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, material_center));
+    scene.add(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, material_left));
+    scene.add(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, material_right));
+
+    let light: Light<SolidColor> = Light::new(SolidColor::new(4.0, 4.0, 4.0));
+    scene.add(Sphere::new(Vec3::new(0.0, 3.0, 0.0), 1.0, light));
 
     (scene, camera)
 }
