@@ -44,13 +44,26 @@ public class Parser {
     // Statement -> Modifier ID Type Assignment SEMICOLON
     private Statement Statement(Modifier modifier) throws ParseException {
         switch (lex.curToken()) {
-            case VAR, VAL -> {
+            case VAR -> {
                 lex.nextToken();
                 expect(Token.ID);
                 Identifier id = new Identifier(lex.curStr());
                 lex.nextToken();
                 Type type = Type();
                 lex.nextToken();
+                Assignment assignment = Assignment(type);
+                return new Statement(modifier, id, type, assignment);
+            }
+            case VAL -> {
+                lex.nextToken();
+                expect(Token.ID);
+                Identifier id = new Identifier(lex.curStr());
+                lex.nextToken();
+                Type type = Type();
+                lex.nextToken();
+                if (lex.curToken == Token.SEMICOLON) {
+                    throw new ParseException("Expected '='", lex.curPos);
+                }
                 Assignment assignment = Assignment(type);
                 return new Statement(modifier, id, type, assignment);
             }

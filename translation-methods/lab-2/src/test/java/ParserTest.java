@@ -68,11 +68,6 @@ public class ParserTest {
     }
 
     @Test
-    public void testValDeclsWithoutAssignment() {
-        assertEquals(code(st(val, "a", Int)), test("val a: Int;"));
-    }
-
-    @Test
     public void testStringType() {
         assertEquals(code(st(var, "a", String)), test("var a: String;"));
     }
@@ -110,6 +105,11 @@ public class ParserTest {
     @Test(expected = ParseException.class)
     public void testMissingEqualSign() throws ParseException {
         build("var a: Int 1;");
+    }
+
+    @Test(expected = ParseException.class)
+    public void testIncorrectValDecl() throws ParseException {
+        build("val x: Int;");
     }
 
     Node build(String input) throws ParseException {

@@ -63,3 +63,23 @@ var num: Int = 128;
 ```
 
 ![parse tree](./src/main/resources/graph/tree.png)
+
+# Modification
+
+- val выражение доступно только с инициализацией
+- Убрать:
+
+```kotlin 
+val x: Int;  
+```
+
+# Новая грамматика
+
+```
+List -> List Stmt | Stmt
+Stmt -> val id Type ValAssignment ; | var id Type VarAssignment ;
+ValAssignment -> Assignment
+VarAssignment -> Assignment | eps
+Type -> : type
+Assignment -> = value
+```
