@@ -48,7 +48,7 @@ public class ParserTest {
     public void testVarDeclWithAssignment() {
         assertEquals(code(st(var, "a", Int, 1)), test("var a: Int = 1;"));
     }
-    
+
     @Test
     public void testTwoVarDeclsWithAssignment() {
         assertEquals(
@@ -96,19 +96,6 @@ public class ParserTest {
     public void testStringAssignment() {
         assertEquals(code(st(var, "a", String, "Hello")), test("var a: String = \"Hello\";"));
     }
-
-
-    @Test(expected = ParseException.class)
-    public void testIncorrectStringInit() throws ParseException {
-        build("var a: String = Hello;");
-    }
-
-
-    @Test(expected = ParseException.class)
-    public void testMissingSemicolon() throws ParseException {
-        build("var a: String = \"Hello\"");
-    }
-
 
     @Test(expected = ParseException.class)
     public void testMissingType() throws ParseException {
