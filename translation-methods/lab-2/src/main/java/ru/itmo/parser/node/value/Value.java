@@ -24,7 +24,7 @@ public class Value<T> extends AbstractNode {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 1;
     }
 

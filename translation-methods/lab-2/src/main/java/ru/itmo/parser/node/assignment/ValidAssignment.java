@@ -20,7 +20,7 @@ public class ValidAssignment extends AbstractNode implements Assignment {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 3;
     }
 

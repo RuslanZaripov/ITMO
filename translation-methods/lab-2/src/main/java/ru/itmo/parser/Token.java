@@ -52,17 +52,17 @@ public enum Token implements Node {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 1;
     }
 
     @Override
-    public int getNumber() {
+    public int getNodeId() {
         return number;
     }
 
     @Override
-    public void setNumber(int number) {
+    public void setNodeId(int number) {
         this.number = number;
     }
 }

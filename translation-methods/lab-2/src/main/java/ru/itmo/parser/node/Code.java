@@ -42,7 +42,7 @@ public class Code extends AbstractNode {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 12 * code.size() + 1;
     }
 

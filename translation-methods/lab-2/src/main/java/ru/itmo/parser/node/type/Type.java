@@ -24,7 +24,7 @@ public class Type extends AbstractNode {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 3;
     }
 

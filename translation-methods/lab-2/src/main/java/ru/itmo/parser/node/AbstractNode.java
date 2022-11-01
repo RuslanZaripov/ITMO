@@ -6,16 +6,16 @@ import java.util.List;
 
 public abstract class AbstractNode implements Node {
     private static final String EMPTY_STRING = "";
-    private int number;
+    private int id;
 
     @Override
-    public int getNumber() {
-        return number;
+    public int getNodeId() {
+        return id;
     }
 
     @Override
-    public void setNumber(int number) {
-        this.number = number;
+    public void setNodeId(int number) {
+        this.id = number;
     }
 
     @Override
@@ -24,7 +24,7 @@ public abstract class AbstractNode implements Node {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 2;
     }
 

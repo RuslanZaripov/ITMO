@@ -21,7 +21,7 @@ public class Identifier extends AbstractNode {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 1;
     }
 

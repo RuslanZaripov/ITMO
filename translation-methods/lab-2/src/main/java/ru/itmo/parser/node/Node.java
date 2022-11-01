@@ -9,9 +9,9 @@ public interface Node {
 
     String getLabel();
 
-    int getCountNumber();
+    int getNodesAmount();
 
-    int getNumber();
+    int getNodeId();
 
-    void setNumber(int number);
+    void setNodeId(int number);
 }

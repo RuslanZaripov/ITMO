@@ -49,7 +49,7 @@ public class Visualizer {
     }
 
     private void buildGraphHelper(final Node curr, final int nodeNumber) {
-        curr.setNumber(nodeNumber);
+        curr.setNodeId(nodeNumber);
         addEntry(setNode(curr, nodeNumber));
         List<Node> children = curr.getChildren();
         if (children.isEmpty()) {
@@ -61,7 +61,7 @@ public class Visualizer {
                 nextNodeNumber = nodeNumber + 1;
             } else {
                 Node prev = children.get(i - 1);
-                nextNodeNumber = prev.getNumber() + prev.getCountNumber();
+                nextNodeNumber = prev.getNodeId() + prev.getNodesAmount();
             }
             buildGraphHelper(children.get(i), nextNodeNumber);
             addEntry(setEdge(nodeNumber, nextNodeNumber));

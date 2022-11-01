@@ -30,7 +30,7 @@ public class Modifier extends AbstractNode {
     }
 
     @Override
-    public int getCountNumber() {
+    public int getNodesAmount() {
         return 2;
     }
 
