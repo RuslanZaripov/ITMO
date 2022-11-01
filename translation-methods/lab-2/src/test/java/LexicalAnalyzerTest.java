@@ -1,6 +1,6 @@
+import org.junit.Test;
 import ru.itmo.parser.LexicalAnalyzer;
 import ru.itmo.parser.Token;
-import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -82,8 +82,21 @@ public class LexicalAnalyzerTest {
         test("var x : Int = 5; val y : Int = 6;", combine(varDeclarationWithAssignment(), valDeclarationWithAssignment()));
     }
 
+    @Test
+    public void testMultipleDeclarationsWithoutAssignment() throws ParseException {
+        test("var x : Int; var y : Int;", combine(repeat(2, varDeclarationWithoutAssignment())));
+    }
+
     private Token[] combine(Token[]... lists) {
         return Arrays.stream(lists).flatMap(Arrays::stream).toArray(Token[]::new);
+    }
+
+    private Token[] repeat(int count, Token[] expr) {
+        Token[] result = new Token[0];
+        for (int i = 0; i < count; i++) {
+            result = combine(result, expr);
+        }
+        return result;
     }
 
     public void test(String input, Token... tokens) throws ParseException {
@@ -99,7 +112,7 @@ public class LexicalAnalyzerTest {
         assertEquals(lex.curToken(), Token.EOF);
     }
 
-    public Token[] pattern(Token declarationKeyword, boolean withAssignment) {
+    public Token[] constructExpr(Token declarationKeyword, boolean withAssignment) {
         List<Token> tokens = new ArrayList<>(List.of(declarationKeyword, Token.ID, Token.COLON, Token.TYPE));
         if (withAssignment) {
             tokens.addAll(List.of(Token.EQUAL, Token.VALUE));
@@ -109,18 +122,18 @@ public class LexicalAnalyzerTest {
     }
 
     public Token[] varDeclarationWithoutAssignment() {
-        return pattern(Token.VAR, false);
+        return constructExpr(Token.VAR, false);
     }
 
     public Token[] valDeclarationWithAssignment() {
-        return pattern(Token.VAL, true);
+        return constructExpr(Token.VAL, true);
     }
 
     public Token[] valDeclarationWithoutAssignment() {
-        return pattern(Token.VAL, false);
+        return constructExpr(Token.VAL, false);
     }
 
     public Token[] varDeclarationWithAssignment() {
-        return pattern(Token.VAR, true);
+        return constructExpr(Token.VAR, true);
     }
 }

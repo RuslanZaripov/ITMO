@@ -1,3 +1,4 @@
+import org.junit.Test;
 import ru.itmo.parser.Parser;
 import ru.itmo.parser.Token;
 import ru.itmo.parser.node.*;
@@ -7,15 +8,14 @@ import ru.itmo.parser.node.type.Type;
 import ru.itmo.parser.node.value.IntValue;
 import ru.itmo.parser.node.value.StringValue;
 import ru.itmo.parser.node.value.Value;
-import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
+import static org.junit.Assert.assertEquals;
 import static ru.itmo.parser.node.type.KotlinType.INT;
 import static ru.itmo.parser.node.type.KotlinType.STRING;
-import static org.junit.Assert.assertEquals;
 
 public class ParserTest {
     private final Parser parser = new Parser();
@@ -32,6 +32,10 @@ public class ParserTest {
         return new Statement(mod, new Identifier(id), type, new EmptyAssignment());
     }
 
+    private static Code code(Statement... statements) {
+        return new Code(statements);
+    }
+
     private static <T> Value<?> specifyValue(T value) {
         return switch (value) {
             case Integer i -> new IntValue(i);
@@ -41,56 +45,56 @@ public class ParserTest {
     }
 
     @Test
-    public void testParse1() {
-        assertEquals(new Code(st(var, "a", Int, 1)), test("var a: Int = 1;"));
+    public void testVarDeclWithAssignment() {
+        assertEquals(code(st(var, "a", Int, 1)), test("var a: Int = 1;"));
     }
-
+    
     @Test
-    public void testParse2() {
+    public void testTwoVarDeclsWithAssignment() {
         assertEquals(
-                new Code(st(var, "a", Int, 1), st(var, "b", Int, 2)),
+                code(st(var, "a", Int, 1), st(var, "b", Int, 2)),
                 test("var a: Int = 1; var b: Int = 2;")
         );
     }
 
     @Test
-    public void testParse3() {
-        assertEquals(new Code(st(var, "a", Int)), test("var a: Int;"));
+    public void testVarDeclsWithoutAssignment() {
+        assertEquals(code(st(var, "a", Int)), test("var a: Int;"));
     }
 
     @Test
-    public void testParse4() {
-        assertEquals(new Code(st(val, "a", Int, 1)), test("val a: Int = 1;"));
+    public void testValDeclWithAssignment() {
+        assertEquals(code(st(val, "a", Int, 1)), test("val a: Int = 1;"));
     }
 
     @Test
-    public void testParse5() {
-        assertEquals(new Code(st(val, "a", Int)), test("val a: Int;"));
+    public void testValDeclsWithoutAssignment() {
+        assertEquals(code(st(val, "a", Int)), test("val a: Int;"));
     }
 
     @Test
-    public void testParse6() {
-        assertEquals(new Code(st(var, "a", String)), test("var a: String;"));
+    public void testStringType() {
+        assertEquals(code(st(var, "a", String)), test("var a: String;"));
     }
 
     @Test(expected = ParseException.class)
-    public void testParse7() throws ParseException {
+    public void testIncorrectAssignmentStringTypeWithIntValue() throws ParseException {
         build("var a: String = 1;");
     }
 
     @Test
-    public void testParse8() {
-        assertEquals(new Code(st(var, "a1", Int)), test("var a1: Int;"));
+    public void testIdentifier() {
+        assertEquals(code(st(var, "a1", Int)), test("var a1: Int;"));
     }
 
     @Test
-    public void testParse9() {
-        assertEquals(new Code(st(var, "a", Int), st(var, "b", Int, 2)), test("var a: Int; var b: Int = 2;"));
+    public void testManyDifferentDecls() {
+        assertEquals(code(st(var, "a", Int), st(var, "b", Int, 2)), test("var a: Int; var b: Int = 2;"));
     }
 
     @Test
-    public void testParse10() {
-        assertEquals(new Code(st(var, "a", String, "Hello")), test("var a: String = \"Hello\";"));
+    public void testStringAssignment() {
+        assertEquals(code(st(var, "a", String, "Hello")), test("var a: String = \"Hello\";"));
     }
 
 
