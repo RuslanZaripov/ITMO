@@ -84,40 +84,9 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
     });
 
-    let get_builder_attr_setters = |field: &Field| -> Option<(bool, TokenStream)> {
-        let ident = &field.ident;
-        for attr in &field.attrs {
-            let syn::Attribute { path, tokens, .. } = attr;
-            if path.segments.len() != 1 {
-                return None;
-            }
-            let segment = path.segments.first().unwrap();
-            if segment.ident != "builder" {
-                return None;
-            }
-            if let TokenTree::Group(group) = tokens.clone().into_iter().next().unwrap() {
-                let vec_inner_ty = match get_vec_inner_ty(&field.ty) {
-                    Some(inner_ty) => inner_ty,
-                    None => panic!("builder attribute can only be used on Vec fields"),
-                };
-                let attr_ident = parse_attr(&group);
-                return Some((
-                    ident.as_ref().unwrap() == &attr_ident,
-                    quote! {
-                        pub fn #attr_ident(&mut self, #attr_ident: #vec_inner_ty) -> &mut Self {
-                            self.#ident.push(#attr_ident);
-                            self
-                        }
-                    },
-                ));
-            }
-        }
-        None
-    };
-
     let setters = input_fields.iter().map(|field| {
         let default_setter = generate_default_setter(&field);
-        match get_builder_attr_setters(&field) {
+        match generate_builder_attr_setters(&field) {
             Some((true, builder_setter)) => builder_setter,
             Some((false, builder_setter)) => {
                 quote! {
@@ -204,6 +173,37 @@ fn generate_default_setter(field: &&Field) -> TokenStream {
             }
         }
     };
+}
+
+fn generate_builder_attr_setters(field: &Field) -> Option<(bool, TokenStream)> {
+    let ident = &field.ident;
+    for attr in &field.attrs {
+        let syn::Attribute { path, tokens, .. } = attr;
+        if path.segments.len() != 1 {
+            return None;
+        }
+        let segment = path.segments.first().unwrap();
+        if segment.ident != "builder" {
+            return None;
+        }
+        if let TokenTree::Group(group) = tokens.clone().into_iter().next().unwrap() {
+            let vec_inner_ty = match get_vec_inner_ty(&field.ty) {
+                Some(inner_ty) => inner_ty,
+                None => panic!("builder attribute can only be used on Vec fields"),
+            };
+            let attr_ident = parse_attr(&group);
+            return Some((
+                ident.as_ref().unwrap() == &attr_ident,
+                quote! {
+                    pub fn #attr_ident(&mut self, #attr_ident: #vec_inner_ty) -> &mut Self {
+                        self.#ident.push(#attr_ident);
+                        self
+                    }
+                },
+            ));
+        }
+    }
+    None
 }
 
 fn parse_attr(g: &Group) -> Ident {
