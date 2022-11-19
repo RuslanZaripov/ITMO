@@ -1,8 +1,8 @@
-use proc_macro2::{Group, Literal, TokenTree};
+use proc_macro2::{Group, Literal, TokenStream, TokenTree};
 use proc_macro2::Ident;
 
 use quote::quote;
-use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields, FieldsNamed};
+use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields, FieldsNamed, Field};
 
 fn get_inner_ty<'a>(wrapper: &'a str, field_type: &'a syn::Type) -> Option<&'a syn::Type> {
     if let syn::Type::Path(syn::TypePath { path, .. }) = field_type {
@@ -25,15 +25,14 @@ fn get_inner_ty<'a>(wrapper: &'a str, field_type: &'a syn::Type) -> Option<&'a s
     None
 }
 
-fn is_builder_attr_field(field: &syn::Field) -> Option<proc_macro2::TokenStream> {
-    for attr in &field.attrs {
-        if let syn::Attribute { path, tokens, .. } = attr {
-            if path.segments.len() == 1 && path.segments.first().unwrap().ident == "builder" {
-                return Some(tokens.clone());
-            }
+fn has_builder_attr(field: &Field) -> bool {
+    field.attrs.iter().any(|attr| {
+        let syn::Attribute { path, .. } = attr;
+        if path.segments.len() == 1 && path.segments.first().unwrap().ident == "builder" {
+            return true;
         }
-    }
-    None
+        false
+    })
 }
 
 fn get_vec_inner_ty(field_type: &syn::Type) -> Option<&syn::Type> {
@@ -72,7 +71,7 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let b_fields = input_fields.iter().map(|field| {
         let ident = &field.ident;
         let ty = &field.ty;
-        if is_option(ty) {
+        if is_option(ty) || has_builder_attr(field) {
             quote! {
                 #ident: #ty
             }
@@ -83,22 +82,7 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
     });
 
-    let b_setters = input_fields.iter().map(|field| {
-        let ident = &field.ident;
-        let ty = match get_option_inner_ty(&field.ty) {
-            Some(inner_type) => inner_type,
-            None => &field.ty
-        };
-        // eprintln!("{:#?}", &field);
-        quote! {
-            pub fn #ident(&mut self, #ident: #ty) -> &mut Self {
-                self.#ident = Some(#ident);
-                self
-            }
-        }
-    });
-
-    let builder_attr_setters = input_fields.iter().filter_map(|field| {
+    let get_builder_attr_setters = |field: &Field| -> Option<(bool, TokenStream)>  {
         let ident = &field.ident;
         for attr in &field.attrs {
             let syn::Attribute { path, tokens, .. } = attr;
@@ -118,27 +102,41 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 match syn::Lit::new(parse_attr(group)) {
                     syn::Lit::Str(s) => {
                         let attr_ident = Ident::new(&s.value(), s.span());
-                        return Some(quote! {
-                            pub fn #attr_ident(&mut self, #attr_ident: #vec_inner_ty) -> &mut Self {
-                                if self.#ident.is_none() {
-                                    self.#ident = Some(vec![]);
+                        return Some((
+                            ident.as_ref().unwrap() == &attr_ident,
+                            quote! {
+                                pub fn #attr_ident(&mut self, #attr_ident: #vec_inner_ty) -> &mut Self {
+                                    self.#ident.push(#attr_ident);
+                                    self
                                 }
-                                self.#ident.as_mut().unwrap().push(#attr_ident);
-                                self
                             }
-                        });
+                        ));
                     }
                     lit => panic!("Unexpected literal: {:#?}", lit)
                 };
             }
         }
         None
+    };
+
+    let setters = input_fields.iter().map(|field| {
+        let setter = generate_default_setter(&field);
+        match get_builder_attr_setters(&field) {
+            Some((true, builder_setter)) => builder_setter,
+            Some((false, builder_setter)) => {
+                quote! {
+                    #setter
+                    #builder_setter
+                }
+            }
+            None => setter
+        }
     });
 
     let build_fields = input_fields.iter().map(|field| {
         let ident = &field.ident;
         let ty = &field.ty;
-        if is_option(ty) {
+        if is_option(ty) || has_builder_attr(field) {
             quote! {
                 #ident: self.#ident.clone()
             }
@@ -151,9 +149,15 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     let none_fields = input_fields.iter().map(|field| {
         let ident = &field.ident;
-        quote!(
-            #ident: None
-        )
+        if has_builder_attr(field) {
+            quote! {
+                #ident: vec![]
+            }
+        } else {
+            quote! {
+                #ident: std::option::Option::None
+            }
+        }
     });
 
     let tokens = quote! {
@@ -170,8 +174,7 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
 
         impl #b_ident {
-            #(#b_setters)*
-            #(#builder_attr_setters)*
+            #(#setters)*
 
             fn build(&mut self) -> anyhow::Result<#name> {
                 Ok(#name {
@@ -182,6 +185,31 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     };
     // eprintln!("TOKENS:\n {}", tokens);
     proc_macro::TokenStream::from(tokens)
+}
+
+fn generate_default_setter(field: &&Field) -> TokenStream {
+    let ident = &field.ident;
+    let ty = match get_option_inner_ty(&field.ty) {
+        Some(inner_type) => inner_type,
+        None => &field.ty
+    };
+    // eprintln!("{:#?}", &field);
+    let setter = if has_builder_attr(field) {
+        quote! {
+                pub fn #ident(&mut self, #ident: #ty) -> &mut Self {
+                    self.#ident = #ident;
+                    self
+                }
+            }
+    } else {
+        quote! {
+                pub fn #ident(&mut self, #ident: #ty) -> &mut Self {
+                    self.#ident = Some(#ident);
+                    self
+                }
+            }
+    };
+    setter
 }
 
 fn parse_attr(g: Group) -> Literal {
