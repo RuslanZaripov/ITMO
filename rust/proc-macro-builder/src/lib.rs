@@ -1,5 +1,4 @@
-use proc_macro2::Ident;
-use proc_macro2::{Group, TokenStream, TokenTree};
+use proc_macro2::{Ident, Group, TokenStream, TokenTree};
 
 use quote::quote;
 use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed};
@@ -32,10 +31,7 @@ fn get_inner_ty<'a>(wrapper: &'a str, field_type: &'a syn::Type) -> Option<&'a s
 fn has_builder_attr(field: &Field) -> bool {
     field.attrs.iter().any(|attr| {
         let syn::Attribute { path, .. } = attr;
-        if path.segments.len() == 1 && path.segments.first().unwrap().ident == "builder" {
-            return true;
-        }
-        false
+        return path.segments.len() == 1 && path.segments.first().unwrap().ident == "builder";
     })
 }
 
@@ -176,7 +172,6 @@ fn generate_default_setter(field: &&Field) -> TokenStream {
 }
 
 fn generate_builder_attr_setters(field: &Field) -> Option<(bool, TokenStream)> {
-    let ident = &field.ident;
     for attr in &field.attrs {
         let syn::Attribute { path, tokens, .. } = attr;
         if path.segments.len() != 1 {
@@ -186,12 +181,13 @@ fn generate_builder_attr_setters(field: &Field) -> Option<(bool, TokenStream)> {
         if segment.ident != "builder" {
             return None;
         }
+        let ident = &field.ident;
         if let TokenTree::Group(group) = tokens.clone().into_iter().next().unwrap() {
+            let attr_ident = parse_attr(&group);
             let vec_inner_ty = match get_vec_inner_ty(&field.ty) {
                 Some(inner_ty) => inner_ty,
                 None => panic!("builder attribute can only be used on Vec fields"),
             };
-            let attr_ident = parse_attr(&group);
             return Some((
                 ident.as_ref().unwrap() == &attr_ident,
                 quote! {
