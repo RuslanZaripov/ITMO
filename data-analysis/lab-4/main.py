@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from math import radians, sin, cos, sqrt, atan2
 
 import numpy as np
@@ -50,8 +51,8 @@ def show_nan_statistics(df):
     print('\n')
 
 
-def save_first_n_rows(df, n=10):
-    df.head(n).to_csv('./misc/part.csv', index=False)
+def save_first_n_rows(df, file_name, n=10):
+    df.head(n).to_csv(f'./misc/{file_name}', index=False)
 
 
 def print_current_dir():
@@ -82,19 +83,45 @@ def add_new_features(df):
     df['is_moscow'] = df['region'].apply(lambda x: 1 if x == 'Москва' else 0)
     df['is_spb'] = df['region'].apply(lambda x: 1 if x == 'Санкт-Петербург' else 0)
     df['is_moscow_oblast'] = df['region'].apply(lambda x: 1 if x == 'Московская область' else 0)
-    df['is_kazan'] = df['region'].apply(lambda x: 1 if x == 'Казань' else 0)
     df['is_region'] = \
         df['region'].apply(lambda x: 1 if x not in ['Москва', 'Санкт-Петербург', 'Московская область', 'Казань'] else 0)
 
     # drop region column
     df.drop('region', axis=1, inplace=True)
 
-    # print how many 1s and 0s are in cloumns is_moscow, is_spb, is_moscow_oblast, is_region, is_kazan
+    # print how many 1s and 0s are in cloumns is_moscow, is_spb, is_moscow_oblast, is_region
     print(f'\nIs moscow: {df["is_moscow"].sum()}')
     print(f'Is spb: {df["is_spb"].sum()}')
-    print(f'Is kazan: {df["is_kazan"].sum()}')
     print(f'Is moscow oblast: {df["is_moscow_oblast"].sum()}')
     print(f'Is region: {df["is_region"].sum()}\n')
+
+    # list of russian cities with population more than 1 million
+    cities_with_population_more_than_1_million = ['Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
+                                                  'Нижний Новгород', 'Челябинск', 'Самара', 'Омск',
+                                                  'Ростов-на-Дону', 'Уфа', 'Красноярск', 'Воронеж', 'Пермь',
+                                                  'Волгоград']
+
+    # make column is_million (1 if city is in cities_with_population_more_than_1_million, 0 otherwise)
+    df['is_million'] = df['city'].apply(lambda x: 1 if x in cities_with_population_more_than_1_million else 0)
+
+    # make column is_not_million (1 if city is not in cities_with_population_more_than_1_million, 0 otherwise)
+    df['is_not_million'] = df['city'].apply(lambda x: 1 if x not in cities_with_population_more_than_1_million else 0)
+
+    # print how many 1s and 0s are in cloumns is_million, is_not_million
+    print(f'\nIs million: {df["is_million"].sum()}')
+    print(f'Is not million: {df["is_not_million"].sum()}\n')
+
+    # drop city column
+    df.drop('city', axis=1, inplace=True)
+
+    # make column district_type (1 if realty_type is 110, 10 if realty_type is 100, 0 otherwise)
+    df['district_type'] = df['realty_type'].apply(lambda x: 1 if x == 110 else 10 if x == 100 else 0)
+
+    # drop realty_type column
+    df.drop('realty_type', axis=1, inplace=True)
+
+    # covert date to int
+    df['date'] = df['date'].apply(lambda x: int(x.replace('-', '')))
 
     print(f'\n{" Add new features finished ":*^100}\n')
     return df
@@ -139,7 +166,7 @@ def validate_data(df):
     df['reform_mean_year_building_500'] = df['reform_mean_year_building_500'].fillna(
         df['reform_mean_year_building_1000'])
 
-    # df = add_new_features(df)
+    df = add_new_features(df)
 
     # show_statistics(df)
     show_nan_statistics(df)
@@ -160,7 +187,7 @@ def show_statistics(train_df):
     print(f'Number of columns: {train_df.shape[1]}')
 
     # print name of city which osm_city_nearest_population is nan
-    show_column_isna_field_features(train_df, 'osm_city_nearest_population', ['city', 'region'])
+    # show_column_isna_field_features(train_df, 'osm_city_nearest_population', ['city', 'region'])
 
     # print name of city and latitude and longitude of it which reform_house_population_1000 is nan
     # show_column_isna_field_features(train_df, 'reform_house_population_1000', ['region'])
@@ -275,7 +302,7 @@ def train2(train_df, target, features_with_target, string_columns):
 
     # visualize_corr(X_train)
     # print("high correltaed values: ", correlation(X_train, 0.7))
-    show_features_variance(X_train)
+    # show_features_variance(X_train)
     best_features_var = analyze_variance(X_train, y_train)
     best_features_corr = analyze_correltaion(train_df.drop(columns=string_columns), target)
 
@@ -307,11 +334,13 @@ def show_features_variance(df):
 def analyze_variance(df_train, df_test):
     print(f'\n{" Analyzing Features variance ":.^100}\n')
     best_error = Infinity
+    best_var = 0
     best_features = []
     errors = []
     variances = []
     # best var 2
-    for var in [2, 2.1]:
+    vals = [0.05, 0.06, 0.07, 0.08, 0.09]
+    for var in vals:
         features = df_train.var()[df_train.var() > var].index.tolist()
 
         train_x = df_train[features]
@@ -330,10 +359,11 @@ def analyze_variance(df_train, df_test):
         if error < best_error:
             best_error = error
             best_features = features
+            best_var = var
         errors.append(error)
         variances.append(var)
 
-    print(f'\nBest features stat: {best_error} - \n{best_features}')
+    print(f'\nBest features stat: {best_var} {best_error} - \n{best_features}')
 
     plt.plot(variances, errors)
     plt.xlabel('Variance')
@@ -347,11 +377,10 @@ def analyze_variance(df_train, df_test):
 def analyze_correltaion(df_train, predict_target):
     print(f'\n{" Analyzing Features correlation ":.^100}\n')
 
-    print(df_train[predict_target])
-
     # best val 0,15
-    # vals = [0.03, 0.14, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    vals = [0.15]
+    # vals = [0.15]
+    vals = [0.03, 0.14, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    best_val = 0
     best_features = []
     best_error = Infinity
     errors = []
@@ -378,10 +407,11 @@ def analyze_correltaion(df_train, predict_target):
         if error < best_error:
             best_error = error
             best_features = features
+            best_val = val
         errors.append(error)
         correlations.append(val)
 
-    print(f'Best features {best_error}: {best_features}')
+    print(f'Best features {best_val} {best_error}: {best_features}')
 
     plt.plot(correlations, errors)
     plt.xlabel('Correlation')
@@ -424,7 +454,7 @@ def predict(model, target, features_to_drop, best_features):
     predicted_price = model.predict(test_x[best_features])
 
     # create dataframe with predicted price
-    predicted_price_df = pd.DataFrame({target: predicted_price, 'id': test_df.index})
+    predicted_price_df = pd.DataFrame({'id': test_df.index, target: predicted_price})
 
     # save predicted price to csv file
     predicted_price_df.to_csv('./res/predicted_price.csv', index=False)
@@ -439,11 +469,13 @@ def main():
     # read data/train.csv using pandas
     train_df = pd.read_csv('./data/train.csv')
 
-    string_columns = show_statistics(train_df)
-
-    save_first_n_rows(train_df, 200)
+    save_first_n_rows(train_df, 'initial_part.csv', 200)
 
     train_df = validate_data(train_df)
+
+    save_first_n_rows(train_df, 'after_val_part.csv', 200)
+
+    string_columns = show_statistics(train_df)
 
     target = 'per_square_meter_price'
     # create new list object of string_columns with target column
