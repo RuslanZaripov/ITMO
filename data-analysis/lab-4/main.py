@@ -1,8 +1,13 @@
 import os
 from math import radians, sin, cos, sqrt, atan2
 
+import numpy as np
 import pandas as pd
+import seaborn as sns
+from matplotlib import pyplot as plt
+from numpy import Infinity
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, r2_score, mean_absolute_percentage_error
 from sklearn.model_selection import train_test_split
 
 # https://www.kaggle.com/datasets/lildatascientist/raifhackds2021fall
@@ -188,6 +193,139 @@ def train(train_df, string_columns):
     # train model
     model.fit(train_x, train_y)
 
+    print(f'\n{" Model trained ":.^100}\n')
+    return model
+
+
+def visualize_corr(X_train):
+    # create correlation matrix
+    # corr_matrix = X_train.corr().abs()
+
+    # select upper triangle of correlation matrix
+    # upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+
+    # find index of feature columns with correlation greater than 0.95
+    # to_drop = [column for column in upper.columns if any(upper[column] > 0.95)]
+
+    # drop features
+    # X_train.drop(X_train[to_drop], axis=1)
+
+    # plot correlation matrix
+    plt.figure(figsize=(20, 20))
+    sns.heatmap(X_train.corr(), annot=True, fmt='.2f', cmap='coolwarm')
+    plt.show()
+
+
+def correlation(df, threshold):
+    col_corr = set()  # Set of all the names of deleted columns
+    corr_matrix = df.corr()
+    for i in range(len(corr_matrix.columns)):
+        for j in range(i):
+            if abs(corr_matrix.iloc[i, j]) > threshold:  # we are interested in absolute coeff value
+                colname = corr_matrix.columns[i]  # getting the name of column
+                col_corr.add(colname)
+                # if colname in df.columns:
+                #     del df[colname]
+    return col_corr
+
+
+def train2(train_df, target, features):
+    print(f'\n{" Training model... ":.^100}\n')
+
+    # try to avoid overfitting
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     train_df.drop(columns=string_columns_with_target),
+    #     train_df[target],
+    #     test_size=0.2,
+    #     random_state=42
+    # )
+
+    # create train_x and train_y datasets
+    X_train = train_df.drop(columns=features)
+    y_train = train_df[target]
+
+    # visualize_corr(X_train)
+    # print("high correltaed values: ", correlation(X_train, 0.7))
+    show_features_variance(X_train)
+    best_features = analyze_variance(X_train, y_train)
+
+    # create LinearRegression model
+    model = LinearRegression()
+
+    # train model
+    model.fit(X_train[best_features], y_train)
+
+    print(f'\n{" Model trained ":.^100}\n')
+    return model, best_features
+
+
+def show_features_variance(df):
+    print(f'\n{" Features variance ":.^100}\n')
+
+    max_len = max([len(feature) for feature in df.columns])
+    for feature in df.columns:
+        var = df[feature].var()
+        print(f"{f'{feature}:':<{max_len}} {f'{var:.5f}':>15}")
+
+    print(f'\n{" Features variance ":.^100}\n')
+
+
+def analyze_variance(df_train, df_test):
+    print(f'\n{" Analyzing Features variance ":.^100}\n')
+    best_error = Infinity
+    best_features = []
+    errors = []
+    variances = []
+    for var in [0.01, 1.5, 1.9, 2, 2.1, 3, 4]:
+        features = df_train.var()[df_train.var() > var].index.tolist()
+
+        train_x = df_train[features]
+        train_y = df_test
+
+        model = LinearRegression()
+        model.fit(train_x, train_y)
+        y_pred = model.predict(train_x)
+
+        r2 = r2_score(train_y, y_pred)
+        print(f'Correlation {var}: {r2}')
+
+        error = mean_absolute_percentage_error(train_y, y_pred)
+        print(f'MAPE {var}: {error}')
+
+        if error < best_error:
+            best_error = error
+            best_features = features
+        errors.append(error)
+        variances.append(var)
+
+    print(f'\nBest features stat: {best_error} - \n{best_features}')
+
+    plt.plot(variances, errors)
+    plt.xlabel('Variance')
+    plt.ylabel('MAPE')
+    plt.show()
+
+    print(f'\n{" Analyzing Features variance ":.^100}\n')
+    return best_features
+
+
+def r2_score_stat(predicted_price, y_test):
+    # calculate r2 score
+    r2 = r2_score(y_test, predicted_price)
+    # print(f'\nR2 score: {r2}')
+    return r2
+
+
+def mape_stat(predicted_price, y_test):
+    # calculate mean absolute error
+    mape = mean_absolute_percentage_error(y_test, predicted_price)
+    # print(f'\nMean absolute percentage error: {mape}')
+    return mape
+
+
+def predict(model, target, features_to_drop, best_features):
+    print(f'\n{" Predicting... ":.^100}\n')
+
     # read test_x dataset from csv file
     test_df = pd.read_csv('./data/test_x.csv')
 
@@ -197,10 +335,10 @@ def train(train_df, string_columns):
     # validate model
     test_x = validate_data(test_x)
 
-    test_x = test_x.drop(columns=string_columns)
+    test_x = test_x.drop(columns=features_to_drop)
 
     # predict price
-    predicted_price = model.predict(test_x)
+    predicted_price = model.predict(test_x[best_features])
 
     # create dataframe with predicted price
     predicted_price_df = pd.DataFrame({target: predicted_price, 'id': test_df.index})
@@ -208,7 +346,7 @@ def train(train_df, string_columns):
     # save predicted price to csv file
     predicted_price_df.to_csv('./res/predicted_price.csv', index=False)
 
-    print(f'\n{" Model trained ":.^100}\n')
+    print(f'\n{" Predicted ":.^100}\n')
 
 
 def main():
@@ -224,7 +362,16 @@ def main():
 
     train_df = validate_data(train_df)
 
-    train(train_df, string_columns)
+    target = 'per_square_meter_price'
+    # create new list object of string_columns with target column
+    string_columns_with_target = string_columns + [target]
+
+    print(f'\nColumns with string values: {string_columns}')
+    print(f'\nColumns with string values and target: {string_columns_with_target}')
+
+    model, best_features = train2(train_df, target, string_columns_with_target)
+
+    predict(model, target, string_columns, best_features)
 
 
 if __name__ == '__main__':
