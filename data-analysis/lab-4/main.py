@@ -71,6 +71,35 @@ def print_columns_containing_string_values(df):
     return columns
 
 
+def add_new_features(df):
+    print(f'\n{" Add new features ":*^100}\n')
+
+    # divide column region into 3 columns:
+    # is_moscow (1 if region is 'Москва', 0 otherwise),
+    # is_spb (1 if region is 'Санкт-Петербург', 0 otherwise),
+    # is_moscow_oblast (1 if region is 'Московская область', 0 otherwise)
+    # is_region (1 if region is not 'Москва', 'Санкт-Петербург', 'Московская область', 0 otherwise)
+    df['is_moscow'] = df['region'].apply(lambda x: 1 if x == 'Москва' else 0)
+    df['is_spb'] = df['region'].apply(lambda x: 1 if x == 'Санкт-Петербург' else 0)
+    df['is_moscow_oblast'] = df['region'].apply(lambda x: 1 if x == 'Московская область' else 0)
+    df['is_kazan'] = df['region'].apply(lambda x: 1 if x == 'Казань' else 0)
+    df['is_region'] = \
+        df['region'].apply(lambda x: 1 if x not in ['Москва', 'Санкт-Петербург', 'Московская область', 'Казань'] else 0)
+
+    # drop region column
+    df.drop('region', axis=1, inplace=True)
+
+    # print how many 1s and 0s are in cloumns is_moscow, is_spb, is_moscow_oblast, is_region, is_kazan
+    print(f'\nIs moscow: {df["is_moscow"].sum()}')
+    print(f'Is spb: {df["is_spb"].sum()}')
+    print(f'Is kazan: {df["is_kazan"].sum()}')
+    print(f'Is moscow oblast: {df["is_moscow_oblast"].sum()}')
+    print(f'Is region: {df["is_region"].sum()}\n')
+
+    print(f'\n{" Add new features finished ":*^100}\n')
+    return df
+
+
 def validate_data(df):
     print(f'\n{" Validating data... ":*^100}\n')
     # count nan fields
@@ -110,7 +139,7 @@ def validate_data(df):
     df['reform_mean_year_building_500'] = df['reform_mean_year_building_500'].fillna(
         df['reform_mean_year_building_1000'])
 
-    print(df.corr())
+    # df = add_new_features(df)
 
     # show_statistics(df)
     show_nan_statistics(df)
@@ -229,7 +258,7 @@ def correlation(df, threshold):
     return col_corr
 
 
-def train2(train_df, target, features):
+def train2(train_df, target, features_with_target, string_columns):
     print(f'\n{" Training model... ":.^100}\n')
 
     # try to avoid overfitting
@@ -241,13 +270,18 @@ def train2(train_df, target, features):
     # )
 
     # create train_x and train_y datasets
-    X_train = train_df.drop(columns=features)
+    X_train = train_df.drop(columns=features_with_target)
     y_train = train_df[target]
 
     # visualize_corr(X_train)
     # print("high correltaed values: ", correlation(X_train, 0.7))
     show_features_variance(X_train)
-    best_features = analyze_variance(X_train, y_train)
+    best_features_var = analyze_variance(X_train, y_train)
+    best_features_corr = analyze_correltaion(train_df.drop(columns=string_columns), target)
+
+    # intersect best features
+    best_features = list(set(best_features_var) & set(best_features_corr))
+    print(f'\nBest features: {best_features}')
 
     # create LinearRegression model
     model = LinearRegression()
@@ -276,7 +310,8 @@ def analyze_variance(df_train, df_test):
     best_features = []
     errors = []
     variances = []
-    for var in [0.01, 1.5, 1.9, 2, 2.1, 3, 4]:
+    # best var 2
+    for var in [2, 2.1]:
         features = df_train.var()[df_train.var() > var].index.tolist()
 
         train_x = df_train[features]
@@ -306,6 +341,54 @@ def analyze_variance(df_train, df_test):
     plt.show()
 
     print(f'\n{" Analyzing Features variance ":.^100}\n')
+    return best_features
+
+
+def analyze_correltaion(df_train, predict_target):
+    print(f'\n{" Analyzing Features correlation ":.^100}\n')
+
+    print(df_train[predict_target])
+
+    # best val 0,15
+    # vals = [0.03, 0.14, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    vals = [0.15]
+    best_features = []
+    best_error = Infinity
+    errors = []
+    correlations = []
+    for val in vals:
+        features = df_train.corr()[predict_target][df_train.corr()[predict_target] > val].index.tolist()
+
+        if len(features) == 0:
+            continue
+
+        train_x = df_train[features]
+        train_y = df_train[predict_target]
+
+        model = LinearRegression()
+        model.fit(train_x, train_y)
+        y_pred = model.predict(train_x)
+
+        r2 = r2_score(train_y, y_pred)
+        print(f'Correlation {val}: {r2}')
+
+        error = mean_absolute_percentage_error(train_y, y_pred)
+        print(f'MAPE {val}: {error}')
+
+        if error < best_error:
+            best_error = error
+            best_features = features
+        errors.append(error)
+        correlations.append(val)
+
+    print(f'Best features {best_error}: {best_features}')
+
+    plt.plot(correlations, errors)
+    plt.xlabel('Correlation')
+    plt.ylabel('MAPE')
+    plt.show()
+
+    print(f'\n{" Analyzing Features correlation ":.^100}\n')
     return best_features
 
 
@@ -369,7 +452,7 @@ def main():
     print(f'\nColumns with string values: {string_columns}')
     print(f'\nColumns with string values and target: {string_columns_with_target}')
 
-    model, best_features = train2(train_df, target, string_columns_with_target)
+    model, best_features = train2(train_df, target, string_columns_with_target, string_columns)
 
     predict(model, target, string_columns, best_features)
 
