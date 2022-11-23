@@ -50,18 +50,16 @@ fn is_option(field_type: &syn::Type) -> bool {
 
 #[proc_macro_derive(Builder, attributes(builder))]
 pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = parse_macro_input!(_input as DeriveInput);
+    let input_struct = parse_macro_input!(_input as DeriveInput);
 
-    // eprintln!("input: {:#?}", input);
-
-    let name = input.ident;
+    let name = input_struct.ident;
 
     let b_ident = Ident::new(&format!("{}Builder", name), name.span());
 
-    let input_fields = if let Data::Struct(DataStruct {
+    let struct_fields = if let Data::Struct(DataStruct {
         fields: Fields::Named(FieldsNamed { ref named, .. }),
         ..
-    }) = input.data
+    }) = input_struct.data
     {
         named
     } else {
@@ -69,21 +67,18 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         unimplemented!();
     };
 
-    let b_fields = input_fields.iter().map(|field| {
+    let b_fields = struct_fields.iter().map(|field| {
         let ident = &field.ident;
         let ty = &field.ty;
-        if is_option(ty) || has_builder_attr(field) {
-            quote! {
-                #ident: #ty
-            }
+        let value = if is_option(ty) || has_builder_attr(field) {
+            quote! { #ty }
         } else {
-            quote! {
-                #ident: std::option::Option<#ty>
-            }
-        }
+            quote! { std::option::Option<#ty> }
+        };
+        quote! { #ident: #value }
     });
 
-    let setters = input_fields.iter().map(|field| {
+    let b_setters = struct_fields.iter().map(|field| {
         let default_setter = generate_default_setter(&field);
         match generate_builder_attr_setters(&field) {
             Some((true, builder_setter)) => builder_setter,
@@ -97,7 +92,7 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
     });
 
-    let build_fields = input_fields.iter().map(|field| {
+    let build_fields = struct_fields.iter().map(|field| {
         let ident = &field.ident;
         let ty = &field.ty;
         if is_option(ty) || has_builder_attr(field) {
@@ -111,16 +106,15 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
     });
 
-    let none_fields = input_fields.iter().map(|field| {
+    let none_fields = struct_fields.iter().map(|field| {
         let ident = &field.ident;
-        if has_builder_attr(field) {
-            quote! {
-                #ident: std::vec::Vec::new()
-            }
+        let value = if has_builder_attr(field) {
+            quote! { std::vec::Vec::new() }
         } else {
-            quote! {
-                #ident: std::option::Option::None
-            }
+            quote! { std::option::Option::None }
+        };
+        quote! {
+            #ident: #value
         }
     });
 
@@ -138,9 +132,9 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
 
         impl #b_ident {
-            #(#setters)*
+            #(#b_setters)*
 
-            fn build(&mut self) -> anyhow::Result<#name> {
+            pub fn build(&mut self) -> anyhow::Result<#name> {
                 Ok(#name {
                     #(#build_fields,)*
                 })
@@ -153,25 +147,22 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 fn generate_default_setter(field: &&Field) -> TokenStream {
     let ident = &field.ident;
-    let ident_ty = match get_option_inner_ty(&field.ty) {
+    let ty = &field.ty;
+    let ident_ty = match get_option_inner_ty(ty) {
         Some(inner_ty) => inner_ty,
-        None => &field.ty,
+        None => ty,
     };
-    return if has_builder_attr(field) {
-        quote! {
-            pub fn #ident(&mut self, #ident: #ident_ty) -> &mut Self {
-                self.#ident = #ident;
-                self
-            }
-        }
+    let value = if has_builder_attr(field) {
+        quote! { #ident }
     } else {
-        quote! {
-            pub fn #ident(&mut self, #ident: #ident_ty) -> &mut Self {
-                self.#ident = std::option::Option::Some(#ident);
-                self
-            }
-        }
+        quote! { std::option::Option::Some(#ident) }
     };
+    quote! {
+        pub fn #ident(&mut self, #ident: #ident_ty) -> &mut Self {
+            self.#ident = #value;
+            self
+        }
+    }
 }
 
 fn generate_builder_attr_setters(field: &Field) -> Option<(bool, TokenStream)> {
