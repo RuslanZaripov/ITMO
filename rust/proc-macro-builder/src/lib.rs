@@ -104,10 +104,11 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 fn get_inner_ty<'a>(wrapper: &'a str, field_type: &'a syn::Type) -> Option<&'a syn::Type> {
     if let syn::Type::Path(syn::TypePath { path, .. }) = field_type {
-        if path.segments.len() != 1 {
+        let segments = &path.segments;
+        if segments.len() != 1 {
             return None;
         }
-        let segment = path.segments.first().unwrap();
+        let segment = segments.first().unwrap();
         if segment.ident != wrapper {
             return None;
         }
@@ -116,10 +117,7 @@ fn get_inner_ty<'a>(wrapper: &'a str, field_type: &'a syn::Type) -> Option<&'a s
             ..
         }) = &segment.arguments
         {
-            if args.len() != 1 {
-                return None;
-            }
-            if let syn::GenericArgument::Type(ty) = &args.first().unwrap() {
+            if let Some(syn::GenericArgument::Type(ty)) = &args.first() {
                 return Some(ty);
             }
         }
@@ -130,7 +128,8 @@ fn get_inner_ty<'a>(wrapper: &'a str, field_type: &'a syn::Type) -> Option<&'a s
 fn has_builder_attr(field: &Field) -> bool {
     field.attrs.iter().any(|attr| {
         let syn::Attribute { path, .. } = attr;
-        return path.segments.len() == 1 && path.segments.first().unwrap().ident == "builder";
+        let segments = &path.segments;
+        return segments.len() == 1 && segments.first().unwrap().ident == "builder";
     })
 }
 
@@ -179,21 +178,13 @@ fn generate_builder_attr_setters(field: &Field) -> Option<(bool, TokenStream)> {
     for attr in &field.attrs {
         match attr.parse_meta() {
             Ok(syn::Meta::List(ref meta_list)) => {
-                let segments = &meta_list.path.segments;
-                if segments.len() != 1 {
-                    return None;
-                }
-                if segments.first().unwrap().ident != "builder" {
+                if !meta_list.path.is_ident("builder") {
                     return None;
                 }
                 let nested = &meta_list.nested;
                 return match nested.first() {
                     Some(syn::NestedMeta::Meta(syn::Meta::NameValue(ref meta_name_value))) => {
-                        let segments = &meta_name_value.path.segments;
-                        if segments.len() != 1 {
-                            return None;
-                        }
-                        if segments.first().unwrap().ident != "each" {
+                        if !meta_name_value.path.is_ident("each") {
                             return make_error_msg(meta_list);
                         }
                         let lit = &meta_name_value.lit;
@@ -216,8 +207,7 @@ fn generate_builder_attr_setters(field: &Field) -> Option<(bool, TokenStream)> {
                     _ => make_error_msg(nested),
                 };
             }
-            Ok(ref meta) => make_error_msg(meta),
-            Err(_) => continue,
+            bad => make_error_msg(bad.as_ref().unwrap()),
         };
     }
     None
