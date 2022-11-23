@@ -52,12 +52,15 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let build_fields = struct_fields.iter().map(|field| {
         let ident = &field.ident;
         let ty = &field.ty;
-        let value = if is_option(ty) || has_builder_attr(field) {
-            quote! { self.#ident.clone() }
+        if is_option(ty) || has_builder_attr(field) {
+            quote! {
+               #ident: self.#ident.clone()
+            }
         } else {
-            quote! { self.#ident.take().ok_or(anyhow::anyhow!("{} is not set", stringify!(#ident)))? }
-        };
-        quote! { #ident: #value }
+            quote! {
+                #ident: self.#ident.take().ok_or(anyhow::anyhow!("{} is not set", stringify!(#ident)))?
+            }
+        }
     });
 
     let none_fields = struct_fields.iter().map(|field| {
