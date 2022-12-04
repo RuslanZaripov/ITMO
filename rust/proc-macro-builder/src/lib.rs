@@ -34,7 +34,7 @@ pub fn derive(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     let b_setters = struct_fields.iter().map(|field| {
         let default_setter = generate_default_setter(&field);
-        match generate_builder_attr_setters(&field) {
+        match generate_builder_attr_setters(field) {
             Some((same_idents, builder_setter)) => {
                 if same_idents {
                     builder_setter
