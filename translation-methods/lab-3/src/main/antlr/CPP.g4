@@ -49,12 +49,16 @@ jumpStatement: (Break | Continue | returnExpression) Semicolon;
 
 returnExpression: Return expression?;
 
+
 // can add initializer later
-selectionStatement: If LeftParen expression RightParen statement (Else statement)?;
+selectionStatement: If LeftParen condition RightParen statement (Else statement)?;
+
 
 iterationStatement:
-    While LeftParen expression RightParen statement
-    | For LeftParen forInitStmt expression? Semicolon expression? RightParen statement;
+    While LeftParen condition RightParen statement
+    | For LeftParen forInitStmt condition? Semicolon expression? RightParen statement;
+
+condition: expression | declSpecifierSeq declarator Assign assignmentExpression;
 
 forInitStmt: expressionStatement | simpleDeclaration;
 

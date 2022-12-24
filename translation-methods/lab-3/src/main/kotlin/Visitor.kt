@@ -1,5 +1,6 @@
 import CPPParser.*
 import org.antlr.runtime.Token
+import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 
 class Visitor : CPPBaseVisitor<Unit>() {
@@ -8,6 +9,7 @@ class Visitor : CPPBaseVisitor<Unit>() {
 
     companion object {
         private const val FOR = "for"
+        private const val WHILE = "while"
         private const val SPACE = " "
         private const val TAB = "\t"
         private const val ELSE = "else"
@@ -68,12 +70,9 @@ class Visitor : CPPBaseVisitor<Unit>() {
             when {
                 isOperator(node) -> builder.append(SPACE)
                 isComma(node) -> builder.append(SPACE)
-                isFor(node) -> builder.append(SPACE)
             }
         }
     }
-
-    private fun isFor(node: TerminalNode) = node.symbol.type == For
 
     private fun isOperator(node: TerminalNode) =
         (operations.contains(node.symbol.type)
@@ -127,33 +126,29 @@ class Visitor : CPPBaseVisitor<Unit>() {
         builder.append(SEMICOLON).appendLine()
     }
 
-    // TODO: two expressions is bad (replace one to condition)
-    // For LeftParen (
-    //		forInitStatement condition? Semi expression?
-    //		| forRangeDeclaration Colon forRangeInitializer
-    //	) RightParen statement;
     override fun visitIterationStatement(ctx: IterationStatementContext) {
         when (ctx.getStart().type) {
             For -> {
                 builder.append(FOR).append(SPACE).append(LEFT_PAREN)
                 visit(ctx.forInitStmt())
                 builder.deleteCharAt(builder.length - 1)
-                safeVisit(ctx.expression(0))
+                safeVisit(ctx.condition())
                 builder.append(SEMICOLON)
-                safeVisit(ctx.expression(1))
+                safeVisit(ctx.expression())
                 builder.append(RIGHT_PAREN).append(SPACE)
                 formatBranch(ctx.statement())
             }
+
             While -> {
-                builder.append("while").append(SPACE).append(LEFT_PAREN)
-                visit(ctx.expression(0))
+                builder.append(WHILE).append(SPACE).append(LEFT_PAREN)
+                visit(ctx.condition())
                 builder.append(RIGHT_PAREN).append(SPACE)
                 formatBranch(ctx.statement())
             }
         }
     }
-    
-    private fun safeVisit(ctx: ExpressionContext?) {
+
+    private fun safeVisit(ctx: ParserRuleContext?) {
         if (ctx != null) {
             builder.append(SPACE)
             visit(ctx)
@@ -162,7 +157,7 @@ class Visitor : CPPBaseVisitor<Unit>() {
 
     override fun visitSelectionStatement(ctx: SelectionStatementContext) {
         builder.append(IF).append(SPACE).append(LEFT_PAREN)
-        visit(ctx.expression())
+        visit(ctx.condition())
         builder.append(RIGHT_PAREN).append(SPACE)
         formatBranch(ctx.statement(0))
         if (ctx.statement().size > 1) {
