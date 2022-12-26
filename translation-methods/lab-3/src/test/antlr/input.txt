@@ -1,3 +1,10 @@
+std::string greeting (
+std::string& name
+) {
+return
+"Hello, "+name+"!"
+; }
+
 int
     main( )
 {
@@ -99,4 +106,8 @@ a
   }
   return 0
 ;
+std  :: cout    << "Hello world"
+<<
+ std
+ ::endl;
 }

@@ -1,28 +1,78 @@
 grammar CPP;
 
+// Parser
+
 translationUnit: declarartionseq? EOF;
 
 declarartionseq: declaration+;
 
-declaration: functionDefinition | blockDeclaration;
+
+// qualified or unqualified identifier identificator
+idExpression: unqualifiedid | qualifiedid;
+
+qualifiedid: nestedNameSpecifier unqualifiedid;
+
+unqualifiedid: IDENTIFIER;
+
+// TODO: naming can be specified in the grammar
+nestedNameSpecifier:
+    IDENTIFIER? DoubleColon
+    | nestedNameSpecifier IDENTIFIER DoubleColon;
 
 
 
-functionDefinition: declSpecifierSeq declarator compoundStatement;
+declaration: blockDeclaration | functionDefinition;
+
+
+
+functionDefinition: declSpecifierSeq? declarator compoundStatement;
 
 
 
 statementseq: statement+;
 
-statement: declarationStatement | expressionStatement | compoundStatement | selectionStatement | iterationStatement | jumpStatement;
+statement:
+    declarationStatement
+    | expressionStatement
+    | compoundStatement
+    | selectionStatement
+    | iterationStatement
+    | jumpStatement;
 
 
+
+declarator: ptrDeclarator;
+
+ptrDeclarator: (ptrOperator)* noPtrDeclarator;
+
+noPtrDeclarator: declaratorId | noPtrDeclarator parametersAndQualifiers;
+
+declaratorId: idExpression;
+
+// TODO: know more about nestedNameSpecifier for star operator
+ptrOperator: (And | AndAnd) | Mul;
+
+parametersAndQualifiers: LeftParen parameterDeclarationClause? RightParen;
+
+parameterDeclarationClause: parameterDeclarationList;
+
+parameterDeclarationList: parameterDeclaration (Comma parameterDeclaration)*;
+
+parameterDeclaration: declSpecifierSeq declarator (Assign assignmentExpression)?;
+
+
+
+
+/*
 
 declarator: IDENTIFIER LeftParen parameterList? RightParen;
 
 parameterList: parameterDeclaration (',' parameterDeclaration)*;
 
-parameterDeclaration: typeSpecifier IDENTIFIER;
+parameterDeclaration: simpleTypeSpecifier IDENTIFIER;
+
+*/
+
 
 compoundStatement: LeftBrace statementseq? RightBrace;
 
@@ -31,13 +81,14 @@ compoundStatement: LeftBrace statementseq? RightBrace;
 
 declarationStatement: blockDeclaration;
 
+
 blockDeclaration: simpleDeclaration;
 
 simpleDeclaration: declSpecifierSeq? initDeclaratorList Semicolon;
 
 initDeclaratorList: initDeclarator (Comma initDeclarator)*;
 
-initDeclarator: IDENTIFIER initializer?;
+initDeclarator: declarator initializer?;
 
 initializer: Assign assignmentExpression | LeftParen initializerList RightParen;
 
@@ -50,7 +101,6 @@ jumpStatement: (Break | Continue | returnExpression) Semicolon;
 returnExpression: Return expression?;
 
 
-// can add initializer later
 selectionStatement: If LeftParen condition RightParen statement (Else statement)?;
 
 
@@ -90,6 +140,8 @@ relationalExpression: shiftExpression ((Less | Greater | LessEqual | GreaterEqua
 
 shiftExpression: additiveExpression (shiftOperator additiveExpression)*;
 
+shiftOperator: Less Less | Greater Greater;
+
 additiveExpression: multiplicativeExpression ((Plus | Minus) multiplicativeExpression)*;
 
 multiplicativeExpression: unaryExpression ((Mul | Div | Mod) unaryExpression)*;
@@ -100,7 +152,7 @@ unaryOperator: Or | Mul | And | Plus | Minus | Not;
 
 postfixExpression: primaryExpression | postfixExpression LeftParen initializerList RightParen | postfixExpression (PlusPlus | MinusMinus);
 
-primaryExpression: literal+ | IDENTIFIER | LeftParen expression RightParen;
+primaryExpression: literal+ | idExpression | LeftParen expression RightParen;
 
 
 literal: Intergerliteral | Booleanliteral | Stringliteral;
@@ -108,19 +160,27 @@ literal: Intergerliteral | Booleanliteral | Stringliteral;
 
 declSpecifierSeq: declSpecifier+;
 
-declSpecifier: typeSpecifier | typeQualifier;
+declSpecifier: simpleTypeSpecifier | cvQualifier;
 
-typeSpecifier: Void | Int | Bool;
+simpleTypeSpecifier:
+    nestedNameSpecifier? IDENTIFIER
+    | Auto
+    | Void
+    | Int
+    | Bool;
 
-typeQualifier: Const | Volatile;
+cvQualifier: Const | Volatile;
 
 
+// Number: sequence of digits
 Intergerliteral: DIGIT+;
 
-Stringliteral: '"' ~ ['\\\r\n]* '"';
+Stringliteral: '"' Schar* '"';
 
 Booleanliteral: True | False;
 
+
+// Lexer
 
 If: 'if';
 
@@ -132,13 +192,13 @@ True: 'true';
 
 For: 'for';
 
-
 Bool: 'bool';
 
 Int: 'int';
 
 Void: 'void';
 
+Auto: 'auto';
 
 Break: 'break';
 
@@ -146,14 +206,11 @@ Continue: 'continue';
 
 Return: 'return';
 
-
 Const: 'const';
 
 Volatile: 'volatile';
 
 While: 'while';
-
-shiftOperator: Less Less | Greater Greater;
 
 LeftParen: '(';
 
@@ -223,10 +280,18 @@ Comma: ',';
 
 Semicolon: ';';
 
+DoubleColon: '::';
+
+IDENTIFIER: NONDIGIT (DIGIT | NONDIGIT)*;
+
 
 fragment DIGIT: [0-9];
 
-IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
+fragment NONDIGIT: [a-zA-Z_];
+
+fragment Schar: ~ ["\\\r\n];
+
+// Ignored tokens (whitespace, comments, etc.)
 
 Whitespace: [ \t]+ -> skip;
 

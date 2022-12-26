@@ -11,7 +11,7 @@ class Visitor : CPPBaseVisitor<Unit>() {
         private const val FOR = "for"
         private const val WHILE = "while"
         private const val SPACE = " "
-        private const val TAB = "\t"
+        private const val TAB = "    "
         private const val ELSE = "else"
         private const val IF = "if"
         private const val RETURN = "return"
@@ -57,19 +57,45 @@ class Visitor : CPPBaseVisitor<Unit>() {
         return builder.toString()
     }
 
+    private var shiftOperatorPartFound = false;
+
     override fun visitTerminal(node: TerminalNode) {
         if (node.symbol.type != Token.EOF) {
-            if (node.parent is UnaryOperatorContext) {
-                builder.append(node.text)
-                return
-            }
-            when {
-                isOperator(node) -> builder.append(SPACE)
-            }
-            builder.append(node.text)
-            when {
-                isOperator(node) -> builder.append(SPACE)
-                isComma(node) -> builder.append(SPACE)
+            when (node.parent) {
+                is UnaryOperatorContext -> {
+                    builder.append(node.text)
+                    return
+                }
+
+                is ShiftOperatorContext -> {
+                    shiftOperatorPartFound = if (shiftOperatorPartFound) {
+                        builder.append(node.text)
+                        builder.append(SPACE)
+                        false
+                    } else {
+                        builder.append(SPACE)
+                        builder.append(node.text)
+                        true
+                    }
+                    return
+                }
+
+                is PtrOperatorContext -> {
+                    builder.append(node.text)
+                    builder.append(SPACE)
+                    return
+                }
+
+                else -> {
+                    when {
+                        isOperator(node) -> builder.append(SPACE)
+                    }
+                    builder.append(node.text)
+                    when {
+                        isOperator(node) -> builder.append(SPACE)
+                        isComma(node) -> builder.append(SPACE)
+                    }
+                }
             }
         }
     }
@@ -80,6 +106,8 @@ class Visitor : CPPBaseVisitor<Unit>() {
                 || comparisonOperators.contains(node.symbol.type))
 
     private fun isComma(node: TerminalNode) = node.symbol.type == Comma
+
+    private fun isDoubleColon(node: TerminalNode) = node.symbol.type == DoubleColon
 
     override fun visitFunctionDefinition(ctx: FunctionDefinitionContext) {
         visit(ctx.declSpecifierSeq())
@@ -126,39 +154,49 @@ class Visitor : CPPBaseVisitor<Unit>() {
         builder.append(SEMICOLON).appendLine()
     }
 
+    override fun visitExpressionStatement(ctx: ExpressionStatementContext) {
+        appendIfExist(ctx.expression())
+        builder.append(SEMICOLON).appendLine()
+    }
+
     override fun visitIterationStatement(ctx: IterationStatementContext) {
         when (ctx.getStart().type) {
             For -> {
                 builder.append(FOR).append(SPACE).append(LEFT_PAREN)
                 visit(ctx.forInitStmt())
                 builder.deleteCharAt(builder.length - 1)
-                safeVisit(ctx.condition())
+                appendIfExist(ctx.condition(), before = SPACE)
                 builder.append(SEMICOLON)
-                safeVisit(ctx.expression())
-                builder.append(RIGHT_PAREN).append(SPACE)
+                appendIfExist(ctx.expression(), before = SPACE)
+                builder.append(RIGHT_PAREN)
                 formatBranch(ctx.statement())
             }
 
             While -> {
                 builder.append(WHILE).append(SPACE).append(LEFT_PAREN)
                 visit(ctx.condition())
-                builder.append(RIGHT_PAREN).append(SPACE)
+                builder.append(RIGHT_PAREN)
                 formatBranch(ctx.statement())
             }
         }
     }
 
-    private fun safeVisit(ctx: ParserRuleContext?) {
+    private fun appendIfExist(
+        ctx: ParserRuleContext?,
+        before: String? = null,
+        after: String? = null
+    ) {
         if (ctx != null) {
-            builder.append(SPACE)
+            before?.let { builder.append(it) }
             visit(ctx)
+            after?.let { builder.append(it) }
         }
     }
 
     override fun visitSelectionStatement(ctx: SelectionStatementContext) {
         builder.append(IF).append(SPACE).append(LEFT_PAREN)
         visit(ctx.condition())
-        builder.append(RIGHT_PAREN).append(SPACE)
+        builder.append(RIGHT_PAREN)
         formatBranch(ctx.statement(0))
         if (ctx.statement().size > 1) {
             formatElseBranch(ctx.statement(1))
@@ -190,6 +228,8 @@ class Visitor : CPPBaseVisitor<Unit>() {
         if (!isCompoundStatement(ctx)) {
             builder.appendLine()
             indent++
+        } else {
+            builder.append(SPACE)
         }
         visit(ctx)
         if (!isCompoundStatement(ctx)) {
