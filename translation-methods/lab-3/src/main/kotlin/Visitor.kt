@@ -208,7 +208,6 @@ class Visitor : CPPBaseVisitor<Unit>() {
             builder
                 .append(TAB.repeat(indent))
                 .append(ELSE)
-                .append(SPACE)
                 .appendLine()
             indent++
         } else {

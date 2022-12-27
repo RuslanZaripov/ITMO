@@ -1,110 +1,61 @@
+import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.junit.jupiter.api.Test
+import java.io.File
 import kotlin.test.assertEquals
 
 class VisitorTest {
 
-    private fun format(input: String): String {
-        val parser = CPPParser(CommonTokenStream(CPPLexer(CharStreams.fromString(input))))
+    companion object {
+        private var OUTPUT_FILE = "./src/test/resources/tests/%s/output.txt"
+        private var INPUT_FILE = "./src/test/resources/tests/%s/input.txt"
+    }
+
+    private fun format(stream: CharStream): String {
+        val parser = CPPParser(CommonTokenStream(CPPLexer(stream)))
         val parsedTree = parser.translationUnit()
         val visitor = Visitor()
         visitor.visit(parsedTree)
         return visitor.getCode()
     }
 
-    @Test
-    fun testVisitor() {
-        val unformattedCode = """
-            int    main () {
-            return 0
-            ;   
-            }
-        """.trimIndent()
-        val formattedCode = """
-            int main() {
-                return 0;
-            }
-            
-        """.trimIndent()
-        assertEquals(formattedCode, format(unformattedCode))
+    private fun formatViaString(input: String): String {
+        return format(CharStreams.fromString(input))
+    }
+
+    private fun formatViaFile(fileName: String): String {
+        return format(CharStreams.fromFileName(fileName))
+    }
+
+    private fun test(name: String) {
+        val output = formatViaFile(INPUT_FILE.format(name))
+        val expected = File(OUTPUT_FILE.format(name)).readText()
+        assertEquals(expected, output)
     }
 
     @Test
-    fun testSelectionExpression() {
-        val unformattedCode = """
-            int f() {
-            if (
-            a == 0
-            ) int a
-            
-             = 1; int 
-             a = 2
-             ;
-            
-              if(  a == 0
-              ) 
-               { return 0
-                ;
-                  }else{ 
-                return 1
-                ;
-                }
-            }
-        """.trimIndent()
-        val formattedCode = """
-            int f() {
-                if (a == 0)
-                    int a = 1;
-                int a = 2;
-                if (a == 0) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-            
-        """.trimIndent()
-        assertEquals(formattedCode, format(unformattedCode))
+    fun testInitial() {
+        test("initial")
     }
 
     @Test
-    fun testIterationExpression() {
-        val unformattedCode = """
-            void f() {
-            for(int i = 0
-            ; 
-            i < 10
-            ; 
-            i++
-            ) {
-            int a = 1
-            ;
-            } for 
-           (int i = 0
-           ;  ;i++
-           ) { int a = 1;
-                }
-            while(a == 0) {
-            int a = 1
-            ;
-            }
-            }
-        """.trimIndent()
-        val formattedCode = """
-            void f() {
-                for (int i = 0; i < 10; i++) {
-                    int a = 1;
-                }
-                for (int i = 0;; i++) {
-                    int a = 1;
-                }
-                while (a == 0) {
-                    int a = 1;
-                }
-            }
-            
-        """.trimIndent()
-        assertEquals(formattedCode, format(unformattedCode))
+    fun testSelectionStatement() {
+        test("selectionStatement")
+    }
+
+    @Test
+    fun testExpressions() {
+        test("expressions")
+    }
+
+    @Test
+    fun testRandom() {
+        test("random")
+    }
+
+    @Test
+    fun testIterationStatement() {
+        test("iterationStatement")
     }
 }

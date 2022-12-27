@@ -1,0 +1,28 @@
+int main() {
+    int x = 10;
+    x += 5;
+    x -= 3;
+    x *= 2;
+    int y = 5;
+    y++;
+    ++y;
+    y--;
+    --y;
+    int a = 10, b = 5;
+    int c = a + b;
+    int d = a - b;
+    int e = a * b;
+    bool h = true;
+    bool i = false;
+    bool j = h && i;
+    bool k = h || i;
+    bool l = !h;
+    int m = 10, n = 5;
+    bool o = m == n;
+    bool p = m != n;
+    bool q = m > n;
+    bool r = m < n;
+    bool s = m >= n;
+    bool t = m <= n;
+    return 0;
+}

@@ -1,31 +1,30 @@
 grammar CPP;
 
-// Parser
+/*
+Parser
+*/
 
 translationUnit: declarartionseq? EOF;
 
 declarartionseq: declaration+;
-
-
-// qualified or unqualified identifier identificator
-idExpression: unqualifiedid | qualifiedid;
-
-qualifiedid: nestedNameSpecifier unqualifiedid;
-
-unqualifiedid: IDENTIFIER;
-
-// TODO: naming can be specified in the grammar
-nestedNameSpecifier:
-    IDENTIFIER? DoubleColon
-    | nestedNameSpecifier IDENTIFIER DoubleColon;
-
-
 
 declaration: blockDeclaration | functionDefinition;
 
 
 
 functionDefinition: declSpecifierSeq? declarator compoundStatement;
+
+
+
+idExpression: unqualifiedid | qualifiedid;
+
+qualifiedid: nestedNameSpecifier unqualifiedid;
+
+unqualifiedid: IDENTIFIER;
+
+nestedNameSpecifier:
+    IDENTIFIER? DoubleColon
+    | nestedNameSpecifier IDENTIFIER DoubleColon;
 
 
 
@@ -49,7 +48,6 @@ noPtrDeclarator: declaratorId | noPtrDeclarator parametersAndQualifiers;
 
 declaratorId: idExpression;
 
-// TODO: know more about nestedNameSpecifier for star operator
 ptrOperator: (And | AndAnd) | Mul;
 
 parametersAndQualifiers: LeftParen parameterDeclarationClause? RightParen;
@@ -62,24 +60,12 @@ parameterDeclaration: declSpecifierSeq declarator (Assign assignmentExpression)?
 
 
 
-
-/*
-
-declarator: IDENTIFIER LeftParen parameterList? RightParen;
-
-parameterList: parameterDeclaration (',' parameterDeclaration)*;
-
-parameterDeclaration: simpleTypeSpecifier IDENTIFIER;
-
-*/
-
-
 compoundStatement: LeftBrace statementseq? RightBrace;
 
 
 
-
 declarationStatement: blockDeclaration;
+
 
 
 blockDeclaration: simpleDeclaration;
@@ -101,7 +87,9 @@ jumpStatement: (Break | Continue | returnExpression) Semicolon;
 returnExpression: Return expression?;
 
 
+
 selectionStatement: If LeftParen condition RightParen statement (Else statement)?;
+
 
 
 iterationStatement:
@@ -172,7 +160,6 @@ simpleTypeSpecifier:
 cvQualifier: Const | Volatile;
 
 
-// Number: sequence of digits
 Intergerliteral: DIGIT+;
 
 Stringliteral: '"' Schar* '"';
@@ -180,7 +167,9 @@ Stringliteral: '"' Schar* '"';
 Booleanliteral: True | False;
 
 
-// Lexer
+/*
+Lexer
+*/
 
 If: 'if';
 
@@ -290,8 +279,6 @@ fragment DIGIT: [0-9];
 fragment NONDIGIT: [a-zA-Z_];
 
 fragment Schar: ~ ["\\\r\n];
-
-// Ignored tokens (whitespace, comments, etc.)
 
 Whitespace: [ \t]+ -> skip;
 
