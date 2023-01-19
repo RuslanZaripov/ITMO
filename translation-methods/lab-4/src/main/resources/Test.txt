@@ -1,0 +1,6 @@
+grammar Test;
+
+lex: fun ID | PIG;
+fun: ID;
+ID: "ID";
+PIG: "PIG";
