@@ -1,6 +1,7 @@
 grammar Test;
 
-lex: fun ID | PIG;
-fun: ID;
-ID: "ID";
-PIG: "PIG";
+lex: jok ID | PIG lex;
+jok: ID;
+ID: "joker";
+PIG: "adis";
+WS: "[ \\n\\t\\r]+" -> skip;

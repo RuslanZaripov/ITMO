@@ -1,0 +1,15 @@
+grammar Calculator;
+
+e: t ef;
+ef: PLUS t e;
+t: f tf;
+tf: TIMES f tf;
+f: LPAREN e RPAREN | ID;
+
+PLUS: "+";
+MINUS: "-";
+TIMES: "*";
+DIVIDE: "/";
+LPAREN: "(";
+RPAREN: ")";
+ID: "[a-zA-Z]+";

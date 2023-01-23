@@ -11,6 +11,17 @@ typealias RuleName = String
 //data class NonTerminal(override val name: RuleName, val productions: List<RuleName>) : Rule(name)
 
 // sealed class Rule with subclassed Terminal and NonTerminal
+// EPSILON, EOF are terminal rules
+
+// 1.
+// sealed class State()
+// class RuleName(val name: String) : State()
+// object EPSILON : State()
+// object EOF : State()
+
+// 2.
+// EPSILON : Terminal("EPSILON", "")
+
 sealed class Rule {
     abstract val name: RuleName
 }
@@ -19,33 +30,40 @@ object EPSILON : Rule() {
     override val name: RuleName = "EPS"
 }
 
-data class Terminal(override val name: RuleName, val regex: String) : Rule() {
+data class Terminal(override val name: RuleName, val regex: String, val shouldBeSkipped: Boolean) : Rule() {
     override fun toString(): String {
-        return "$name -> $regex"
+        return "$name: $regex ${if (shouldBeSkipped) "-> skip" else ""}"
     }
 }
 
 data class NonTerminal(override val name: RuleName, val productions: List<RuleName>) : Rule() {
     override fun toString(): String {
-        return "$name -> ${productions.joinToString(" | ")}"
+        return "$name: ${productions.joinToString(" ")}"
     }
 }
 
+// TODO: make sealed class State with subclassed RuleName and Epsilon
+data class Grammar(val name: String?, val rules: List<Rule>) {
+    val first = mutableMapOf<RuleName, HashSet<RuleName>>()
+    val follow = mutableMapOf<RuleName, HashSet<RuleName>>()
 
-sealed class State {
-    object Epsilon : State()
-    data class Names(val prods: HashSet<RuleName>) : State()
-}
+    val terminals = rules.filterIsInstance<Terminal>()
+    val nonTerminals = rules.filterIsInstance<NonTerminal>()
+    val startNonTerminal = nonTerminals.first()
 
-data class Grammar(val rules: List<Rule>) {
-    private val first = mutableMapOf<RuleName, HashSet<RuleName>>()
-    private val follow = mutableMapOf<RuleName, HashSet<RuleName>>()
-
-    private val nonTerminals = rules.filterIsInstance<NonTerminal>()
+    val group = rules.groupBy { it.name }
 
     private val rulesMap = rules.associateBy { it.name }
-    private fun getRuleByName(name: RuleName): Rule {
+    fun getRuleByName(name: RuleName): Rule {
         return rulesMap[name] ?: throw IllegalArgumentException("Rule with name $name not found")
+    }
+
+    fun getFirstSet(nonTerminalName: String, productions: List<RuleName>): HashSet<RuleName> {
+        val firstSet = computeFirstSet(productions)
+        if (firstSet.remove(EPSILON.name)) {
+            firstSet.addAll(follow[nonTerminalName]!!)
+        }
+        return firstSet
     }
 
     private fun computeFirstSet(productions: List<RuleName>): HashSet<RuleName> {
@@ -88,7 +106,7 @@ data class Grammar(val rules: List<Rule>) {
     fun buildFollow() {
         nonTerminals.forEach { follow.putIfAbsent(it.name, hashSetOf()) }
 
-        follow[nonTerminals[0].name]!!.add("$")
+        follow[startNonTerminal.name]!!.add("$")
 
         var changed = true
         while (changed) {
@@ -102,8 +120,7 @@ data class Grammar(val rules: List<Rule>) {
                             followTmp.addAll(computeFirstSet(prods.subList(1, prods.size)))
                         }
 
-                        val followSet = follow[prod]!!
-                        if (followSet.addAll(followTmp)) {
+                        if (follow[prod]!!.addAll(followTmp)) {
                             changed = true
                         }
                     }
@@ -130,14 +147,16 @@ object GrammarBuilder {
         val listener = Listener()
         val walker = ParseTreeWalker()
         walker.walk(listener, parsedTree)
-        return Grammar(listener.rules)
+        return Grammar(listener.grammarName, listener.rules)
     }
 
     private class Listener : GrammarBaseListener() {
+        var grammarName: String? = null
         val rules = mutableListOf<Rule>()
 
         override fun exitTerminalRule(ctx: GrammarParser.TerminalRuleContext) {
-            rules.add(Terminal(ctx.TOKEN_NAME().text, ctx.REGEX().text))
+            val shouldBeSkipped = ctx.SKIP_MODIFIER() != null
+            rules.add(Terminal(ctx.TOKEN_NAME().text, ctx.REGEX().text, shouldBeSkipped))
         }
 
         override fun exitNonTerminalRule(ctx: GrammarParser.NonTerminalRuleContext) {
@@ -145,6 +164,10 @@ object GrammarBuilder {
                 val productions = alter.production().map { it.text }
                 rules.add(NonTerminal(ctx.RULE_NAME().text, productions))
             }
+        }
+
+        override fun exitGrammarName(ctx: GrammarParser.GrammarNameContext) {
+            grammarName = ctx.TOKEN_NAME().text
         }
     }
 }

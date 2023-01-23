@@ -29,6 +29,8 @@ tasks.withType<KotlinCompile> {
 
 application {
     mainClass.set("MainKt")
+    // set classpath src/main/kotlin
+    applicationDefaultJvmArgs = listOf("-cp", "src/main/kotlin/gen")
 }
 
 tasks.generateGrammarSource {
