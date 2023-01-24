@@ -3,15 +3,16 @@ package gen.calculator
 import java.util.regex.Pattern
 
 enum class CalculatorToken(val regex: String, val shouldBeSkipped: Boolean = false) { 
-    PLUS("+"),
+    PLUS("\\+"),
 	MINUS("-"),
-	TIMES("*"),
+	TIMES("\\*"),
 	DIVIDE("/"),
-	LPAREN("("),
-	RPAREN(")"),
-	ID("[a-zA-Z]+"),
+	LPAREN("\\("),
+	RPAREN("\\)"),
+	EPSILON("EPSILON"),
+	NUM("[0-9]+"),
     END("#");
     
-    var value: String? = null
+    lateinit var value: String
     val pattern: Pattern = Pattern.compile(regex)
 }

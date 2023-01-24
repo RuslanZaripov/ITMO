@@ -51,11 +51,14 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
             |        curToken = lexer.nextToken()
             |    }
             |   
-            |    fun parse(): Tree {
+            |    fun parse(): ${capitalize(grammar.startNonTerminal.name)}Context {
             |        val ast = ${grammar.startNonTerminal.name}()
             |        return when (curToken) {
             |            $enumName.END -> ast
-            |            else -> throw Exception("Unexpected token: ${'$'}curToken")
+            |            else -> {
+            |                println("Tree: \n${"$"}ast")
+            |                throw Exception("Unexpected token: ${'$'}curToken")
+            |            }
             |        }
             |    }
             |    
@@ -85,25 +88,58 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
 
     private fun generateContexts() =
         grammar.nonTerminals.distinctBy { it.name }.joinToString(
-            prefix = "\t",
-            separator = "\n\t"
-        ) { "class ${capitalize(it.name)}Context(name: String) : Tree(name)" }
+            separator = "\n"
+        ) { """
+            |class ${capitalize(it.name)}Context(name: String${setAttrs(it, requireTypes = true)}) : Tree(name) {
+            |${generateBody(it)}
+            |}
+        """.trimMargin("|").prependIndent("\t") }
+
+    private fun generateBody(it: NonTerminal): String {
+//        println(generateContext(it))
+        return """
+            |${generateContext(it)}
+            |${it.ruleCtx.returnAttrs?.let { it.joinToString(separator = "\n") { attr -> "var ${attr.name}: ${attr.type}? = null" } } ?: return ""}
+        """.trimMargin("|").prependIndent("\t")
+//        it.ruleCtx.returnAttrs?.let { return it.joinToString(prefix = "{\n\t", separator = "\n\t", postfix = "\n}") { attr -> "var ${attr.name}: ${attr.type}? = null" } } ?: return ""
+    }
+
+    private fun generateContext(it: NonTerminal) = grammar.group[it.name]?.joinToString(separator = "\n") { alter ->
+        (alter as NonTerminal).productions.joinToString(separator = "\n") { production ->
+            if (production.isUpper()) {
+                "lateinit var $production: $enumName"
+            } else {
+                "lateinit var $production: ${capitalize(production)}Context"
+            }
+        }
+    } ?: ""
 
     private fun generateMethod(rule: NonTerminal): String {
         val ctxName = "${rule.name}LocalContext"
         return """
-            |private fun ${rule.name}(): Tree {
-            |    val $ctxName = ${capitalize(rule.name)}Context("${rule.name}")
+            |private fun ${rule.name}${generateArgs(rule)}: ${capitalize(rule.name)}Context {
+            |    val $ctxName = ${capitalize(rule.name)}Context("${rule.name}"${setAttrs(rule, requireTypes = false)})
             |    var lastToken: $enumName
             |    
             |    when (curToken) {
             |${generateBranches(rule.name, ctxName)}
-            |        else -> throw Exception("Unexpected token: ${'$'}curToken")
+            |        else -> {
+            |            println("Tree: \n${"$"}$ctxName")
+            |            throw Exception("Unexpected token: ${'$'}curToken")
+            |        }
             |    }
             |    return $ctxName
             |}
             |
         """.trimMargin("|").prependIndent("\t")
+    }
+
+    private fun setAttrs(rule: NonTerminal, requireTypes: Boolean): String {
+        return rule.ruleCtx.attrs?.joinToString(prefix = ", ", separator = ", ") { if (requireTypes) { "val ${it.name}: ${it.type}" } else { it.name } } ?: ""
+    }
+
+    private fun generateArgs(rule: NonTerminal): String {
+        return rule.ruleCtx.attrs?.joinToString(prefix = "(", separator = ", ", postfix = ")") { arg -> "${arg.name}: ${arg.type}" } ?: "()"
     }
 
     private fun generateBranches(ruleName: String, ctxName: String): String {
@@ -112,13 +148,29 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
             val cond = firstSet.joinToString(", ") { "$enumName.$it" }
             val body = alter.productions.joinToString("\n") { prod ->
                 val treeName: String
+                if (prod == "EPSILON") {
+                    val action = alter.ruleCtx.code[prod]
+                    if (action != null) return@joinToString formatAction(action, ctxName)
+                }
                 if (prod.isUpper()) {
-                    treeName = "Leaf(lastToken, lastToken.value!!)"
-                    "lastToken = check($enumName.$prod)"
+                    treeName = "Leaf(lastToken, lastToken.value)"
+                    var code = "lastToken = check($enumName.$prod)"
+                    code += "\n$ctxName.$prod = lastToken"
+                    val action = alter.ruleCtx.code[prod]
+                    if (action != null) code += "\n${formatAction(action, ctxName)}"
+                    code
                 } else {
-                    treeName = "${prod}Context"
-                    "val $treeName = $prod()"
-                }.plus("\n${ctxName}.add($treeName)")
+                    treeName = prod
+                    var code = "val $treeName = $prod${getArgs(alter, prod, ctxName)}"
+                    code += "\n$ctxName.$prod = $treeName"
+                    val action = alter.ruleCtx.code[prod]
+                    if (action != null) code += "\n${formatAction(action, ctxName)}"
+
+                    code
+                }
+                    .plus("\n${ctxName}.add($treeName)")
+                    .plus("\n")
+
             }.prependIndent("\t")
             """
             |$cond -> {
@@ -126,6 +178,13 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
             |}
             """.trimMargin("|").prependIndent("\t\t")
         }
+    }
+
+    private fun getArgs(alter: NonTerminal, prod: RuleName, ctxName: String) =
+        alter.ruleCtx.initCode[prod]?.replace("$", "$ctxName.") ?: "()"
+
+    private fun formatAction(action: String, ctxName: String): String {
+        return action.replace("$", "$ctxName.").drop(1).dropLast(1)
     }
 
     private fun capitalize(name: String): String {

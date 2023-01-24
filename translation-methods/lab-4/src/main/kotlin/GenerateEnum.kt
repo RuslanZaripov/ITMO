@@ -20,7 +20,7 @@ class GenerateEnum(private val grammar: Grammar, private val path: String) {
             #    ${nonTerminals.joinToString(",\n\t", postfix = ",") { "${it.name}(${it.regex}${setSkipOption(it.shouldBeSkipped)})" }}
             #    END("#");
             #    
-            #    var value: String? = null
+            #    lateinit var value: String
             #    val pattern: Pattern = Pattern.compile(regex)
             #}
             #

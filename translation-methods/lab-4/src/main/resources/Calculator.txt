@@ -1,15 +1,16 @@
 grammar Calculator;
 
-e: t ef;
-ef: PLUS t e;
-t: f tf;
-tf: TIMES f tf;
-f: LPAREN e RPAREN | ID;
+expr return [Int res]: term exprPrime(term.res!!) {$res = $exprPrime.res};
+exprPrime [Int acc] return [Int res]: PLUS term {$res = $acc + $term.res!!} exprPrime($res!!) {$res = $exprPrime.res} | EPSILON {$res = $acc};
+term return [Int res]: factor termPrime(factor.res!!) {$res = $termPrime.res};
+termPrime [Int acc] return [Int res]: TIMES factor {$res = $acc * $factor.res!!} termPrime($res!!) {$res = $termPrime.res} | EPSILON {$res = $acc};
+factor return [Int res]: LPAREN expr {$res = $expr.res} RPAREN | NUM {$res = $NUM.value.toInt()};
 
-PLUS: "+";
+PLUS: "\\+";
 MINUS: "-";
-TIMES: "*";
+TIMES: "\\*";
 DIVIDE: "/";
-LPAREN: "(";
-RPAREN: ")";
-ID: "[a-zA-Z]+";
+LPAREN: "\\(";
+RPAREN: "\\)";
+EPSILON: "EPSILON";
+NUM: "[0-9]+";

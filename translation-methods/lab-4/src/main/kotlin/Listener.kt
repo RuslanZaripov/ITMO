@@ -27,7 +27,7 @@ sealed class Rule {
 }
 
 object EPSILON : Rule() {
-    override val name: RuleName = "EPS"
+    override val name: RuleName = "EPSILON"
 }
 
 data class Terminal(override val name: RuleName, val regex: String, val shouldBeSkipped: Boolean) : Rule() {
@@ -36,11 +36,24 @@ data class Terminal(override val name: RuleName, val regex: String, val shouldBe
     }
 }
 
-data class NonTerminal(override val name: RuleName, val productions: List<RuleName>) : Rule() {
+data class NonTerminal(
+    override val name: RuleName,
+    val productions: List<RuleName>,
+    val ruleCtx: RuleContext
+) : Rule() {
     override fun toString(): String {
         return "$name: ${productions.joinToString(" ")}"
     }
 }
+
+data class RuleContext(
+    var attrs: List<Attribute>? = null,
+    var returnAttrs: List<Attribute>? = null,
+    var initCode: MutableMap<RuleName, String> = mutableMapOf(),
+    var code: MutableMap<RuleName, String> = mutableMapOf(),
+)
+
+data class Attribute(val name: String, val type: String)
 
 // TODO: make sealed class State with subclassed RuleName and Epsilon
 data class Grammar(val name: String?, val rules: List<Rule>) {
@@ -76,7 +89,7 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
             return hashSetOf(firstRule.name)
         }
 
-        val firstTmp = first[firstRule.name]!!
+        val firstTmp = HashSet(first[firstRule.name]!!)
         if (firstTmp.remove(EPSILON.name)) {
             firstTmp.addAll(computeFirstSet(productions.subList(1, productions.size)))
         }
@@ -106,20 +119,20 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
     fun buildFollow() {
         nonTerminals.forEach { follow.putIfAbsent(it.name, hashSetOf()) }
 
-        follow[startNonTerminal.name]!!.add("$")
+        follow[startNonTerminal.name]!!.add("END")
 
         var changed = true
         while (changed) {
             changed = false
             nonTerminals.forEach { nonTerminal ->
                 val prods = nonTerminal.productions
+
                 prods.forEachIndexed { index, prod ->
                     if (getRuleByName(prod) is NonTerminal) {
                         val followTmp = computeFirstSet(prods.subList(index + 1, prods.size))
                         if (followTmp.remove(EPSILON.name)) {
-                            followTmp.addAll(computeFirstSet(prods.subList(1, prods.size)))
+                            followTmp.addAll(follow[nonTerminal.name]!!)
                         }
-
                         if (follow[prod]!!.addAll(followTmp)) {
                             changed = true
                         }
@@ -160,9 +173,25 @@ object GrammarBuilder {
         }
 
         override fun exitNonTerminalRule(ctx: GrammarParser.NonTerminalRuleContext) {
+            val ruleCtx = RuleContext()
+            ruleCtx.returnAttrs = ctx.returnList()?.attributeList()?.attribute()?.map {
+                Attribute(it.RULE_NAME().text, it.TOKEN_NAME().text)
+            }
+            ruleCtx.attrs = ctx.attributeList()?.attribute()?.map {
+                Attribute(it.RULE_NAME().text, it.TOKEN_NAME().text)
+            }
             ctx.alternatives().alternative().forEach { alter ->
-                val productions = alter.production().map { it.text }
-                rules.add(NonTerminal(ctx.RULE_NAME().text, productions))
+                val productions = alter.production().map { it.getChild(0).text }
+                for (productionContext in alter.production()) {
+                    if (productionContext.ARGS() != null) {
+                        ruleCtx.initCode[productionContext.getChild(0).text] = productionContext.ARGS().text
+                    }
+                    if (productionContext.CODE() != null) {
+                        ruleCtx.code[productionContext.getChild(0).text] = productionContext.CODE().text
+                    }
+                }
+                println(ctx.RULE_NAME().text + " " + productions + " " + ruleCtx)
+                rules.add(NonTerminal(ctx.RULE_NAME().text, productions, ruleCtx))
             }
         }
 
