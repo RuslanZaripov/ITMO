@@ -84,6 +84,10 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
             return hashSetOf(EPSILON.name)
         }
 
+        if (productions[0] == EPSILON.name) {
+            return hashSetOf(EPSILON.name)
+        }
+
         val firstRule = getRuleByName(productions[0])
         if (firstRule is Terminal) {
             return hashSetOf(firstRule.name)
@@ -128,6 +132,9 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
                 val prods = nonTerminal.productions
 
                 prods.forEachIndexed { index, prod ->
+                    if (prod == EPSILON.name) {
+                        return@forEachIndexed
+                    }
                     if (getRuleByName(prod) is NonTerminal) {
                         val followTmp = computeFirstSet(prods.subList(index + 1, prods.size))
                         if (followTmp.remove(EPSILON.name)) {

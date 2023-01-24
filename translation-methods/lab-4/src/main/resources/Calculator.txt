@@ -1,10 +1,49 @@
 grammar Calculator;
 
-expr return [Int res]: term exprPrime(term.res!!) {$res = $exprPrime.res};
-exprPrime [Int acc] return [Int res]: PLUS term {$res = $acc + $term.res!!} exprPrime($res!!) {$res = $exprPrime.res} | EPSILON {$res = $acc};
-term return [Int res]: factor termPrime(factor.res!!) {$res = $termPrime.res};
-termPrime [Int acc] return [Int res]: TIMES factor {$res = $acc * $factor.res!!} termPrime($res!!) {$res = $termPrime.res} | EPSILON {$res = $acc};
-factor return [Int res]: LPAREN expr {$res = $expr.res} RPAREN | NUM {$res = $NUM.value.toInt()};
+expr return [Int res]:
+    term
+    exprPrime(term.res!!) {$res = $exprPrime!!.res};
+
+exprPrime [Int acc] return [Int res]:
+    exprOp
+    term {
+        |if ($exprOp!!.PLUS != null)
+        |    $res = $acc + $term!!.res!!
+        |else if ($exprOp!!.MINUS != null)
+        |    $res = $acc - $term!!.res!!
+    }
+    exprPrime($res!!) {$res = $exprPrime!!.res}
+    | EPSILON {$res = $acc};
+
+term return [Int res]:
+    factor
+    termPrime(factor.res!!) {$res = $termPrime!!.res};
+
+termPrime [Int acc] return [Int res]:
+    termOp
+    factor {
+        |if ($termOp!!.TIMES != null)
+        |   $res = $acc * $factor!!.res!!
+        |else if ($termOp!!.DIVIDE != null)
+        |   $res = $acc / $factor!!.res!!
+    }
+    termPrime($res!!) {$res = $termPrime!!.res}
+    | EPSILON {$res = $acc};
+
+factor return [Int res]:
+    LPAREN
+    expr {$res = $expr!!.res}
+    RPAREN
+    | NUM {$res = $NUM!!.value.toInt()}
+    | exprOp factor {
+        |if ($exprOp!!.PLUS != null)
+        |    $res = $factor!!.res!!
+        |else if ($exprOp!!.MINUS != null)
+        |    $res = -$factor!!.res!!
+    };
+
+exprOp: PLUS | MINUS;
+termOp: TIMES | DIVIDE;
 
 PLUS: "\\+";
 MINUS: "-";
@@ -12,5 +51,4 @@ TIMES: "\\*";
 DIVIDE: "/";
 LPAREN: "\\(";
 RPAREN: "\\)";
-EPSILON: "EPSILON";
 NUM: "[0-9]+";

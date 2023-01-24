@@ -89,27 +89,32 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
     private fun generateContexts() =
         grammar.nonTerminals.distinctBy { it.name }.joinToString(
             separator = "\n"
-        ) { """
+        ) {
+            """
             |class ${capitalize(it.name)}Context(name: String${setAttrs(it, requireTypes = true)}) : Tree(name) {
             |${generateBody(it)}
             |}
-        """.trimMargin("|").prependIndent("\t") }
+        """.trimMargin("|").prependIndent("\t")
+        }
 
     private fun generateBody(it: NonTerminal): String {
-//        println(generateContext(it))
         return """
             |${generateContext(it)}
-            |${it.ruleCtx.returnAttrs?.let { it.joinToString(separator = "\n") { attr -> "var ${attr.name}: ${attr.type}? = null" } } ?: return ""}
+            |${generateReturnAttrs(it)}
         """.trimMargin("|").prependIndent("\t")
-//        it.ruleCtx.returnAttrs?.let { return it.joinToString(prefix = "{\n\t", separator = "\n\t", postfix = "\n}") { attr -> "var ${attr.name}: ${attr.type}? = null" } } ?: return ""
     }
+
+    private fun generateReturnAttrs(it: NonTerminal) =
+        it.ruleCtx.returnAttrs?.let { it.joinToString(separator = "\n") { attr -> "var ${attr.name}: ${attr.type}? = null" } }
+            ?: ""
+
 
     private fun generateContext(it: NonTerminal) = grammar.group[it.name]?.joinToString(separator = "\n") { alter ->
         (alter as NonTerminal).productions.joinToString(separator = "\n") { production ->
             if (production.isUpper()) {
-                "lateinit var $production: $enumName"
+                "var $production: $enumName? = null"
             } else {
-                "lateinit var $production: ${capitalize(production)}Context"
+                "var $production: ${capitalize(production)}Context? = null"
             }
         }
     } ?: ""
@@ -135,11 +140,21 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
     }
 
     private fun setAttrs(rule: NonTerminal, requireTypes: Boolean): String {
-        return rule.ruleCtx.attrs?.joinToString(prefix = ", ", separator = ", ") { if (requireTypes) { "val ${it.name}: ${it.type}" } else { it.name } } ?: ""
+        return rule.ruleCtx.attrs?.joinToString(prefix = ", ", separator = ", ") {
+            if (requireTypes) {
+                "val ${it.name}: ${it.type}"
+            } else {
+                it.name
+            }
+        } ?: ""
     }
 
     private fun generateArgs(rule: NonTerminal): String {
-        return rule.ruleCtx.attrs?.joinToString(prefix = "(", separator = ", ", postfix = ")") { arg -> "${arg.name}: ${arg.type}" } ?: "()"
+        return rule.ruleCtx.attrs?.joinToString(
+            prefix = "(",
+            separator = ", ",
+            postfix = ")"
+        ) { arg -> "${arg.name}: ${arg.type}" } ?: "()"
     }
 
     private fun generateBranches(ruleName: String, ctxName: String): String {
@@ -184,7 +199,7 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
         alter.ruleCtx.initCode[prod]?.replace("$", "$ctxName.") ?: "()"
 
     private fun formatAction(action: String, ctxName: String): String {
-        return action.replace("$", "$ctxName.").drop(1).dropLast(1)
+        return action.replace("$", "$ctxName.").drop(1).dropLast(1).trimMargin("|")
     }
 
     private fun capitalize(name: String): String {

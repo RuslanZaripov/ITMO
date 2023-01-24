@@ -9,7 +9,6 @@ enum class CalculatorToken(val regex: String, val shouldBeSkipped: Boolean = fal
 	DIVIDE("/"),
 	LPAREN("\\("),
 	RPAREN("\\)"),
-	EPSILON("EPSILON"),
 	NUM("[0-9]+"),
     END("#");
     

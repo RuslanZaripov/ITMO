@@ -23,12 +23,13 @@ alternatives: alternative (OR alternative)*;
 
 alternative: production+;
 
-production: TOKEN_NAME CODE? | RULE_NAME ARGS? CODE?;
+production: TOKEN_NAME CODE? | RULE_NAME ARGS? CODE? | EPSILON CODE?;
 
 // | '(' alternatives ')';
 
 GRAMMAR: 'grammar';
 RETURN: 'return';
+EPSILON: 'EPSILON';
 
 OR: '|';
 COLON: ':';

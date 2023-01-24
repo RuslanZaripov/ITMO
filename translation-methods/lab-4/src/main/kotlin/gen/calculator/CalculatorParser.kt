@@ -57,35 +57,47 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
     }
    
 	class ExprContext(name: String) : Tree(name) {
-		lateinit var term: TermContext
-		lateinit var exprPrime: ExprPrimeContext
+		var term: TermContext? = null
+		var exprPrime: ExprPrimeContext? = null
 		var res: Int? = null
 	}
 	class ExprPrimeContext(name: String, val acc: Int) : Tree(name) {
-		lateinit var PLUS: CalculatorToken
-		lateinit var term: TermContext
-		lateinit var exprPrime: ExprPrimeContext
-		lateinit var EPSILON: CalculatorToken
+		var exprOp: ExprOpContext? = null
+		var term: TermContext? = null
+		var exprPrime: ExprPrimeContext? = null
+		var EPSILON: CalculatorToken? = null
 		var res: Int? = null
 	}
 	class TermContext(name: String) : Tree(name) {
-		lateinit var factor: FactorContext
-		lateinit var termPrime: TermPrimeContext
+		var factor: FactorContext? = null
+		var termPrime: TermPrimeContext? = null
 		var res: Int? = null
 	}
 	class TermPrimeContext(name: String, val acc: Int) : Tree(name) {
-		lateinit var TIMES: CalculatorToken
-		lateinit var factor: FactorContext
-		lateinit var termPrime: TermPrimeContext
-		lateinit var EPSILON: CalculatorToken
+		var termOp: TermOpContext? = null
+		var factor: FactorContext? = null
+		var termPrime: TermPrimeContext? = null
+		var EPSILON: CalculatorToken? = null
 		var res: Int? = null
 	}
 	class FactorContext(name: String) : Tree(name) {
-		lateinit var LPAREN: CalculatorToken
-		lateinit var expr: ExprContext
-		lateinit var RPAREN: CalculatorToken
-		lateinit var NUM: CalculatorToken
+		var LPAREN: CalculatorToken? = null
+		var expr: ExprContext? = null
+		var RPAREN: CalculatorToken? = null
+		var NUM: CalculatorToken? = null
+		var exprOp: ExprOpContext? = null
+		var factor: FactorContext? = null
 		var res: Int? = null
+	}
+	class ExprOpContext(name: String) : Tree(name) {
+		var PLUS: CalculatorToken? = null
+		var MINUS: CalculatorToken? = null
+	
+	}
+	class TermOpContext(name: String) : Tree(name) {
+		var TIMES: CalculatorToken? = null
+		var DIVIDE: CalculatorToken? = null
+	
 	}
     
 	private fun expr(): ExprContext {
@@ -93,14 +105,14 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 	    var lastToken: CalculatorToken
     
 	    when (curToken) {
-			CalculatorToken.NUM, CalculatorToken.LPAREN -> {
+			CalculatorToken.NUM, CalculatorToken.LPAREN, CalculatorToken.PLUS, CalculatorToken.MINUS -> {
 				val term = term()
 				exprLocalContext.term = term
 				exprLocalContext.add(term)
 		
 				val exprPrime = exprPrime(term.res!!)
 				exprLocalContext.exprPrime = exprPrime
-				exprLocalContext.res = exprLocalContext.exprPrime.res
+				exprLocalContext.res = exprLocalContext.exprPrime!!.res
 				exprLocalContext.add(exprPrime)
 		
 			}
@@ -117,19 +129,22 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 	    var lastToken: CalculatorToken
     
 	    when (curToken) {
-			CalculatorToken.PLUS -> {
-				lastToken = check(CalculatorToken.PLUS)
-				exprPrimeLocalContext.PLUS = lastToken
-				exprPrimeLocalContext.add(Leaf(lastToken, lastToken.value))
+			CalculatorToken.PLUS, CalculatorToken.MINUS -> {
+				val exprOp = exprOp()
+				exprPrimeLocalContext.exprOp = exprOp
+				exprPrimeLocalContext.add(exprOp)
 		
 				val term = term()
 				exprPrimeLocalContext.term = term
-				exprPrimeLocalContext.res = exprPrimeLocalContext.acc + exprPrimeLocalContext.term.res!!
+				if (exprPrimeLocalContext.exprOp!!.PLUS != null)
+				    exprPrimeLocalContext.res = exprPrimeLocalContext.acc + exprPrimeLocalContext.term!!.res!!
+				else if (exprPrimeLocalContext.exprOp!!.MINUS != null)
+				    exprPrimeLocalContext.res = exprPrimeLocalContext.acc - exprPrimeLocalContext.term!!.res!!
 				exprPrimeLocalContext.add(term)
 		
 				val exprPrime = exprPrime(exprPrimeLocalContext.res!!)
 				exprPrimeLocalContext.exprPrime = exprPrime
-				exprPrimeLocalContext.res = exprPrimeLocalContext.exprPrime.res
+				exprPrimeLocalContext.res = exprPrimeLocalContext.exprPrime!!.res
 				exprPrimeLocalContext.add(exprPrime)
 		
 			}
@@ -149,14 +164,14 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 	    var lastToken: CalculatorToken
     
 	    when (curToken) {
-			CalculatorToken.NUM, CalculatorToken.LPAREN -> {
+			CalculatorToken.NUM, CalculatorToken.LPAREN, CalculatorToken.PLUS, CalculatorToken.MINUS -> {
 				val factor = factor()
 				termLocalContext.factor = factor
 				termLocalContext.add(factor)
 		
 				val termPrime = termPrime(factor.res!!)
 				termLocalContext.termPrime = termPrime
-				termLocalContext.res = termLocalContext.termPrime.res
+				termLocalContext.res = termLocalContext.termPrime!!.res
 				termLocalContext.add(termPrime)
 		
 			}
@@ -173,23 +188,26 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 	    var lastToken: CalculatorToken
     
 	    when (curToken) {
-			CalculatorToken.TIMES -> {
-				lastToken = check(CalculatorToken.TIMES)
-				termPrimeLocalContext.TIMES = lastToken
-				termPrimeLocalContext.add(Leaf(lastToken, lastToken.value))
+			CalculatorToken.TIMES, CalculatorToken.DIVIDE -> {
+				val termOp = termOp()
+				termPrimeLocalContext.termOp = termOp
+				termPrimeLocalContext.add(termOp)
 		
 				val factor = factor()
 				termPrimeLocalContext.factor = factor
-				termPrimeLocalContext.res = termPrimeLocalContext.acc * termPrimeLocalContext.factor.res!!
+				if (termPrimeLocalContext.termOp!!.TIMES != null)
+				   termPrimeLocalContext.res = termPrimeLocalContext.acc * termPrimeLocalContext.factor!!.res!!
+				else if (termPrimeLocalContext.termOp!!.DIVIDE != null)
+				   termPrimeLocalContext.res = termPrimeLocalContext.acc / termPrimeLocalContext.factor!!.res!!
 				termPrimeLocalContext.add(factor)
 		
 				val termPrime = termPrime(termPrimeLocalContext.res!!)
 				termPrimeLocalContext.termPrime = termPrime
-				termPrimeLocalContext.res = termPrimeLocalContext.termPrime.res
+				termPrimeLocalContext.res = termPrimeLocalContext.termPrime!!.res
 				termPrimeLocalContext.add(termPrime)
 		
 			}
-			CalculatorToken.END, CalculatorToken.RPAREN, CalculatorToken.PLUS -> {
+			CalculatorToken.END, CalculatorToken.RPAREN, CalculatorToken.PLUS, CalculatorToken.MINUS -> {
 				termPrimeLocalContext.res = termPrimeLocalContext.acc
 			}
 	        else -> {
@@ -212,7 +230,7 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 		
 				val expr = expr()
 				factorLocalContext.expr = expr
-				factorLocalContext.res = factorLocalContext.expr.res
+				factorLocalContext.res = factorLocalContext.expr!!.res
 				factorLocalContext.add(expr)
 		
 				lastToken = check(CalculatorToken.RPAREN)
@@ -223,8 +241,22 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 			CalculatorToken.NUM -> {
 				lastToken = check(CalculatorToken.NUM)
 				factorLocalContext.NUM = lastToken
-				factorLocalContext.res = factorLocalContext.NUM.value.toInt()
+				factorLocalContext.res = factorLocalContext.NUM!!.value.toInt()
 				factorLocalContext.add(Leaf(lastToken, lastToken.value))
+		
+			}
+			CalculatorToken.PLUS, CalculatorToken.MINUS -> {
+				val exprOp = exprOp()
+				factorLocalContext.exprOp = exprOp
+				factorLocalContext.add(exprOp)
+		
+				val factor = factor()
+				factorLocalContext.factor = factor
+				if (factorLocalContext.exprOp!!.PLUS != null)
+				    factorLocalContext.res = factorLocalContext.factor!!.res!!
+				else if (factorLocalContext.exprOp!!.MINUS != null)
+				    factorLocalContext.res = -factorLocalContext.factor!!.res!!
+				factorLocalContext.add(factor)
 		
 			}
 	        else -> {
@@ -233,6 +265,56 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 	        }
 	    }
 	    return factorLocalContext
+	}
+	
+	private fun exprOp(): ExprOpContext {
+	    val exprOpLocalContext = ExprOpContext("exprOp")
+	    var lastToken: CalculatorToken
+    
+	    when (curToken) {
+			CalculatorToken.PLUS -> {
+				lastToken = check(CalculatorToken.PLUS)
+				exprOpLocalContext.PLUS = lastToken
+				exprOpLocalContext.add(Leaf(lastToken, lastToken.value))
+		
+			}
+			CalculatorToken.MINUS -> {
+				lastToken = check(CalculatorToken.MINUS)
+				exprOpLocalContext.MINUS = lastToken
+				exprOpLocalContext.add(Leaf(lastToken, lastToken.value))
+		
+			}
+	        else -> {
+	            println("Tree: \n$exprOpLocalContext")
+	            throw Exception("Unexpected token: $curToken")
+	        }
+	    }
+	    return exprOpLocalContext
+	}
+	
+	private fun termOp(): TermOpContext {
+	    val termOpLocalContext = TermOpContext("termOp")
+	    var lastToken: CalculatorToken
+    
+	    when (curToken) {
+			CalculatorToken.TIMES -> {
+				lastToken = check(CalculatorToken.TIMES)
+				termOpLocalContext.TIMES = lastToken
+				termOpLocalContext.add(Leaf(lastToken, lastToken.value))
+		
+			}
+			CalculatorToken.DIVIDE -> {
+				lastToken = check(CalculatorToken.DIVIDE)
+				termOpLocalContext.DIVIDE = lastToken
+				termOpLocalContext.add(Leaf(lastToken, lastToken.value))
+		
+			}
+	        else -> {
+	            println("Tree: \n$termOpLocalContext")
+	            throw Exception("Unexpected token: $curToken")
+	        }
+	    }
+	    return termOpLocalContext
 	}
 	
 }
