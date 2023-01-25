@@ -8,24 +8,24 @@ class CalculatorLexer(private var input: String) {
     
     fun nextToken(): CalculatorToken {
         for ((token, matcher) in map) {
-           if (matcher.region(curPos, input.length).lookingAt()) {
-               return if (!token.shouldBeSkipped) {
-                   token.value = matcher.group()
-                   curPos = matcher.end()
-                   token
-               } else {
-                   curPos = matcher.end()
-                   nextToken()
-               }
-           }
+            if (matcher.region(curPos, input.length).lookingAt()) {
+                return if (!token.shouldBeSkipped) {
+                    token.value = matcher.group()
+                    curPos = matcher.end()
+                    token
+                } else {
+                    curPos = matcher.end()
+                    nextToken()
+                }
+            }
         }
         throw Exception("No token found")
     }
     
     init {
-       input += '#'
-       for (token in CalculatorToken.values()) {
-           map[token] = token.pattern.matcher(input)
-       }
+        input += '#'
+        for (token in CalculatorToken.values()) {
+            map[token] = token.pattern.matcher(input)
+        }
     }
 }

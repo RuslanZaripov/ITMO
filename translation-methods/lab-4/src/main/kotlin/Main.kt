@@ -1,5 +1,3 @@
-import gen.calculator.*
-
 fun main() {
     println(System.getProperty("user.dir"))
 
@@ -9,14 +7,10 @@ fun main() {
     grammar.buildFirst()
     grammar.buildFollow()
 
-    println(grammar.group)
+    println(grammar.groupRulesByName)
 
     val generatePath = "./src/main/kotlin"
     GenerateEnum(grammar, generatePath).generate()
     GenerateLexer(grammar, generatePath).generate()
     GenerateParser(grammar, generatePath).generate()
-//    val lexer = CalculatorLexer("(---3  *(4--5) + 10 ) /  -  2")
-//    val parser = CalculatorParser(lexer)
-//    val ast = parser.parse()
-//    println(ast.res)
 }

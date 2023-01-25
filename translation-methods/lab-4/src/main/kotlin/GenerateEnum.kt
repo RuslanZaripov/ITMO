@@ -1,23 +1,21 @@
 import java.io.File
 import java.util.*
 
-class GenerateEnum(private val grammar: Grammar, private val path: String) {
+class GenerateEnum(private val grammar: Grammar, private val pathToDir: String) {
     private val prefixPackageName = "gen.${grammar.name?.lowercase(Locale.getDefault())}"
     private val prefixPath = prefixPackageName.replace(".", "/")
 
-    fun generate() {
-        val enumName = "${grammar.name}Token"
-        val path = "$path/$prefixPath/$enumName.kt"
+    private val enumName = "${grammar.name}Token"
+    private val path = "$pathToDir/$prefixPath/$enumName.kt"
 
-        val nonTerminals = grammar.rules.filterIsInstance<Terminal>()
-        // TODO: add WS: [ \t\n ]+ -> skip
+    fun generate() {
         val sourceCode = """
             #package $prefixPackageName
             #
             #import java.util.regex.Pattern
             #
             #enum class $enumName(val regex: String, val shouldBeSkipped: Boolean = false) { 
-            #    ${nonTerminals.joinToString(",\n\t", postfix = ",") { "${it.name}(${it.regex}${setSkipOption(it.shouldBeSkipped)})" }}
+            #    ${generateTokensInit()}
             #    END("#");
             #    
             #    lateinit var value: String
@@ -25,11 +23,15 @@ class GenerateEnum(private val grammar: Grammar, private val path: String) {
             #}
             #
         """.trimMargin("#")
-
-        // create path if not exists and write source code to file
         File(path).parentFile.mkdirs()
         File(path).writeText(sourceCode)
     }
+
+    private fun generateTokensInit() =
+        grammar.terminals.joinToString(
+            ",\n\t",
+            postfix = ","
+        ) { "${it.name}(${it.regex}${setSkipOption(it.shouldBeSkipped)})" }
 
     private fun setSkipOption(shouldBeSkipped: Boolean): String = if (shouldBeSkipped) ", true" else ""
 }

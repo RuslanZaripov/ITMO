@@ -1,4 +1,3 @@
-import com.ibm.icu.impl.UPropertyAliases
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
@@ -60,17 +59,17 @@ data class Attribute(val name: String, val type: String)
 
 // TODO: make sealed class State with subclassed RuleName and Epsilon
 data class Grammar(val name: String?, val rules: List<Rule>) {
-    val first = mutableMapOf<RuleName, HashSet<RuleName>>()
-    val follow = mutableMapOf<RuleName, HashSet<RuleName>>()
+    private val first = mutableMapOf<RuleName, HashSet<RuleName>>()
+    private val follow = mutableMapOf<RuleName, HashSet<RuleName>>()
 
     val terminals = rules.filterIsInstance<Terminal>()
-    val nonTerminals = rules.filterIsInstance<NonTerminal>()
-    val startNonTerminal = nonTerminals.first()
-    val group = rules.groupBy { it.name }
-    private val rulesMap = rules.associateBy { it.name }
-
+    private val nonTerminals = rules.filterIsInstance<NonTerminal>()
     val allNonTerminalNames = nonTerminals.distinctBy { it.name }
 
+    val startNonTerminal = nonTerminals.first()
+    val groupRulesByName = rules.groupBy { it.name }
+
+    private val rulesMap = rules.associateBy { it.name }
     private fun getRuleByName(name: RuleName): Rule {
         return rulesMap[name] ?: throw IllegalArgumentException("Rule with name $name not found")
     }
@@ -163,6 +162,11 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
     override fun toString(): String {
         return rules.joinToString(separator = "\n") { it.toString() }
     }
+}
+
+sealed class State {
+    class RuleName(val name: String, val alias: String) : State()
+    object EPSILON : State()
 }
 
 object GrammarBuilder {
