@@ -34,7 +34,7 @@ factor return [Int res]:
     LPAREN
     expr {$res = $expr!!.res}
     RPAREN
-    | NUM {$res = $NUM!!.value.toInt()}
+    | NUM@num {$res = $num!!.value.toInt()}
     | exprOp factor {
         |if ($exprOp!!.PLUS != null)
         |    $res = $factor!!.res!!
@@ -52,3 +52,4 @@ DIVIDE: "/";
 LPAREN: "\\(";
 RPAREN: "\\)";
 NUM: "[0-9]+";
+WS: "[ \\n\\t\\r]+" -> skip;

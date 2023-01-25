@@ -1,8 +1,11 @@
+import com.ibm.icu.impl.UPropertyAliases
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
 typealias RuleName = String
+typealias Alias = String
+typealias RuleNameOrAlias = String
 
 //abstract class Rule(open val name: RuleName)
 //
@@ -38,7 +41,7 @@ data class Terminal(override val name: RuleName, val regex: String, val shouldBe
 
 data class NonTerminal(
     override val name: RuleName,
-    val productions: List<RuleName>,
+    val productions: List<Pair<RuleName, Alias?>>,
     val ruleCtx: RuleContext
 ) : Rule() {
     override fun toString(): String {
@@ -49,8 +52,8 @@ data class NonTerminal(
 data class RuleContext(
     var attrs: List<Attribute>? = null,
     var returnAttrs: List<Attribute>? = null,
-    var initCode: MutableMap<RuleName, String> = mutableMapOf(),
-    var code: MutableMap<RuleName, String> = mutableMapOf(),
+    var initCode: MutableMap<RuleNameOrAlias, String> = mutableMapOf(),
+    var code: MutableMap<RuleNameOrAlias, String> = mutableMapOf(),
 )
 
 data class Attribute(val name: String, val type: String)
@@ -63,11 +66,12 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
     val terminals = rules.filterIsInstance<Terminal>()
     val nonTerminals = rules.filterIsInstance<NonTerminal>()
     val startNonTerminal = nonTerminals.first()
-
     val group = rules.groupBy { it.name }
-
     private val rulesMap = rules.associateBy { it.name }
-    fun getRuleByName(name: RuleName): Rule {
+
+    val allNonTerminalNames = nonTerminals.distinctBy { it.name }
+
+    private fun getRuleByName(name: RuleName): Rule {
         return rulesMap[name] ?: throw IllegalArgumentException("Rule with name $name not found")
     }
 
@@ -108,7 +112,9 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
             changed = false
             nonTerminals.forEach { nonTerminal ->
                 val firstSet = first[nonTerminal.name]!!
-                if (firstSet.addAll(computeFirstSet(nonTerminal.productions))) {
+                val prods = nonTerminal.productions.map { it.first }
+
+                if (firstSet.addAll(computeFirstSet(prods))) {
                     changed = true
                 }
             }
@@ -129,7 +135,7 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
         while (changed) {
             changed = false
             nonTerminals.forEach { nonTerminal ->
-                val prods = nonTerminal.productions
+                val prods = nonTerminal.productions.map { it.first }
 
                 prods.forEachIndexed { index, prod ->
                     if (prod == EPSILON.name) {
@@ -188,13 +194,14 @@ object GrammarBuilder {
                 Attribute(it.RULE_NAME().text, it.TOKEN_NAME().text)
             }
             ctx.alternatives().alternative().forEach { alter ->
-                val productions = alter.production().map { it.getChild(0).text }
+                val productions = alter.production().map { it.getChild(0).text to it.ALIAS()?.text?.drop(1) }
                 for (productionContext in alter.production()) {
+                    val name = if (productionContext.ALIAS() != null) productionContext.ALIAS().text.drop(1) else productionContext.getChild(0).text
                     if (productionContext.ARGS() != null) {
-                        ruleCtx.initCode[productionContext.getChild(0).text] = productionContext.ARGS().text
+                        ruleCtx.initCode[name] = productionContext.ARGS().text
                     }
                     if (productionContext.CODE() != null) {
-                        ruleCtx.code[productionContext.getChild(0).text] = productionContext.CODE().text
+                        ruleCtx.code[name] = productionContext.CODE().text
                     }
                 }
                 println(ctx.RULE_NAME().text + " " + productions + " " + ruleCtx)

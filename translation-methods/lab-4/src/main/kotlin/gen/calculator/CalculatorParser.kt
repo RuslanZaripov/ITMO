@@ -1,6 +1,32 @@
 package gen.calculator
 
-open class Tree(open val name: String, private val children: MutableList<Tree> = mutableListOf()) {
+class Visualizer {
+    private var index = 0
+
+    fun visualize(tree: Tree): String {
+        val sb = StringBuilder("digraph G {\n")
+        traverse(tree, -1, 0, sb)
+        sb.append("}")
+        return sb.toString()
+    }
+
+    private fun traverse(tree: Tree, parentId: Int, currentId: Int, sb: StringBuilder) {
+        sb.append("\t$currentId [label=${tree.name}]\n")
+        if (parentId != -1) {
+            sb.append("\t$parentId -> $currentId\n")
+        }
+        if (tree.children.isNotEmpty()) {
+            tree.children.forEach { child ->
+                index += 1
+                traverse(child, currentId, index, sb)
+            }
+        } else {
+            index += 1
+        }
+    }
+}
+
+open class Tree(open val name: String, val children: MutableList<Tree> = mutableListOf()) {
     fun add(tree: Tree) {
         children.add(tree)
     }
@@ -19,9 +45,9 @@ open class Tree(open val name: String, private val children: MutableList<Tree> =
         while (it.hasNext()) {
             val next = it.next()
             if (it.hasNext()) {
-                next.print(builder, "$childrenPrefix├── ", "$childrenPrefix│   ")
+                next.print(builder, "$childrenPrefix|-- ", "$childrenPrefix|   ")
             } else {
-                next.print(builder, "$childrenPrefix└── ", "$childrenPrefix    ")
+                next.print(builder, "$childrenPrefix|__ ", "$childrenPrefix    ")
             }
         }
     }
@@ -65,7 +91,7 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 		var exprOp: ExprOpContext? = null
 		var term: TermContext? = null
 		var exprPrime: ExprPrimeContext? = null
-		var EPSILON: CalculatorToken? = null
+	
 		var res: Int? = null
 	}
 	class TermContext(name: String) : Tree(name) {
@@ -77,14 +103,14 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 		var termOp: TermOpContext? = null
 		var factor: FactorContext? = null
 		var termPrime: TermPrimeContext? = null
-		var EPSILON: CalculatorToken? = null
+	
 		var res: Int? = null
 	}
 	class FactorContext(name: String) : Tree(name) {
 		var LPAREN: CalculatorToken? = null
 		var expr: ExprContext? = null
 		var RPAREN: CalculatorToken? = null
-		var NUM: CalculatorToken? = null
+		var num: CalculatorToken? = null
 		var exprOp: ExprOpContext? = null
 		var factor: FactorContext? = null
 		var res: Int? = null
@@ -240,8 +266,8 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 			}
 			CalculatorToken.NUM -> {
 				lastToken = check(CalculatorToken.NUM)
-				factorLocalContext.NUM = lastToken
-				factorLocalContext.res = factorLocalContext.NUM!!.value.toInt()
+				factorLocalContext.num = lastToken
+				factorLocalContext.res = factorLocalContext.num!!.value.toInt()
 				factorLocalContext.add(Leaf(lastToken, lastToken.value))
 		
 			}

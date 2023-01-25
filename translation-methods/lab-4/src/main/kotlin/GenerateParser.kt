@@ -15,7 +15,33 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
         val sourceCode = """
             |package $prefixPackageName
             |
-            |open class Tree(open val name: String, private val children: MutableList<Tree> = mutableListOf()) {
+            |class Visualizer {
+            |    private var index = 0
+            |
+            |    fun visualize(tree: Tree): String {
+            |        val sb = StringBuilder("digraph G {\n")
+            |        traverse(tree, -1, 0, sb)
+            |        sb.append("}")
+            |        return sb.toString()
+            |    }
+            |
+            |    private fun traverse(tree: Tree, parentId: Int, currentId: Int, sb: StringBuilder) {
+            |        sb.append("\t${'$'}currentId [label=${'$'}{tree.name}]\n")
+            |        if (parentId != -1) {
+            |            sb.append("\t${'$'}parentId -> ${'$'}currentId\n")
+            |        }
+            |        if (tree.children.isNotEmpty()) {
+            |            tree.children.forEach { child ->
+            |                index += 1
+            |                traverse(child, currentId, index, sb)
+            |            }
+            |        } else {
+            |            index += 1
+            |        }
+            |    }
+            |}
+            |
+            |open class Tree(open val name: String, val children: MutableList<Tree> = mutableListOf()) {
             |    fun add(tree: Tree) {
             |        children.add(tree)
             |    }
@@ -34,9 +60,9 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
             |        while (it.hasNext()) {
             |            val next = it.next()
             |            if (it.hasNext()) {
-            |                next.print(builder, "${"$"}childrenPrefix├── ", "${"$"}childrenPrefix│   ")
+            |                next.print(builder, "${"$"}childrenPrefix|-- ", "${"$"}childrenPrefix|   ")
             |            } else {
-            |                next.print(builder, "${"$"}childrenPrefix└── ", "${"$"}childrenPrefix    ")
+            |                next.print(builder, "${"$"}childrenPrefix|__ ", "${"$"}childrenPrefix    ")
             |            }
             |        }
             |    }
@@ -110,14 +136,18 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
 
 
     private fun generateContext(it: NonTerminal) = grammar.group[it.name]?.joinToString(separator = "\n") { alter ->
-        (alter as NonTerminal).productions.joinToString(separator = "\n") { production ->
+        (alter as NonTerminal).productions.filter { it.first != "EPSILON" }.joinToString(separator = "\n") { (production, alias) ->
             if (production.isUpper()) {
-                "var $production: $enumName? = null"
+                "var ${getAliasOrProd(alias, production)}: $enumName? = null"
             } else {
-                "var $production: ${capitalize(production)}Context? = null"
+                "var ${getAliasOrProd(alias, production)}: ${capitalize(production)}Context? = null"
             }
         }
     } ?: ""
+
+    private fun getAliasOrProd(alias: String?, prod: String): String {
+        return alias ?: prod
+    }
 
     private fun generateMethod(rule: NonTerminal): String {
         val ctxName = "${rule.name}LocalContext"
@@ -159,26 +189,37 @@ class GenerateParser(val grammar: Grammar, private val path: String) {
 
     private fun generateBranches(ruleName: String, ctxName: String): String {
         return grammar.group[ruleName]!!.filterIsInstance<NonTerminal>().joinToString("\n") { alter ->
-            val firstSet = grammar.getFirstSet(ruleName, alter.productions)
+            val firstSet = grammar.getFirstSet(ruleName, alter.productions.map { it.first })
             val cond = firstSet.joinToString(", ") { "$enumName.$it" }
-            val body = alter.productions.joinToString("\n") { prod ->
+            val body = alter.productions.joinToString("\n") { (prod, alias) ->
                 val treeName: String
                 if (prod == "EPSILON") {
                     val action = alter.ruleCtx.code[prod]
                     if (action != null) return@joinToString formatAction(action, ctxName)
+                    return@joinToString "// do nothing"
                 }
                 if (prod.isUpper()) {
                     treeName = "Leaf(lastToken, lastToken.value)"
+                    val alias = getAliasOrProd(alias, prod)
+
                     var code = "lastToken = check($enumName.$prod)"
-                    code += "\n$ctxName.$prod = lastToken"
-                    val action = alter.ruleCtx.code[prod]
+
+                    code += "\n$ctxName.$alias = lastToken"
+
+                    val action = alter.ruleCtx.code[alias]
                     if (action != null) code += "\n${formatAction(action, ctxName)}"
+
                     code
                 } else {
-                    treeName = prod
-                    var code = "val $treeName = $prod${getArgs(alter, prod, ctxName)}"
-                    code += "\n$ctxName.$prod = $treeName"
-                    val action = alter.ruleCtx.code[prod]
+                    // aliasing
+                    treeName = getAliasOrProd(alias, prod) // variable name in case of many same production
+                    // prod is a method name (a.k.a. non-terminal)
+
+                    var code = "val $treeName = $prod${getArgs(alter, treeName, ctxName)}"
+
+                    code += "\n$ctxName.$treeName = $treeName"
+
+                    val action = alter.ruleCtx.code[treeName]
                     if (action != null) code += "\n${formatAction(action, ctxName)}"
 
                     code

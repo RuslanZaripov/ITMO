@@ -23,7 +23,7 @@ alternatives: alternative (OR alternative)*;
 
 alternative: production+;
 
-production: TOKEN_NAME CODE? | RULE_NAME ARGS? CODE? | EPSILON CODE?;
+production: TOKEN_NAME ALIAS? CODE? | RULE_NAME ALIAS? ARGS? CODE? | EPSILON CODE?;
 
 // | '(' alternatives ')';
 
@@ -44,6 +44,7 @@ RIGHT_BRACE: '}';
 SKIP_MODIFIER : '-> skip';
 RULE_NAME: [a-z][a-zA-Z]*;
 TOKEN_NAME: [A-Z][a-zA-Z_]*;
+ALIAS: [@][a-zA-Z_]+;
 
 ARGS : LEFT_PARAN .*? RIGHT_PARAN ;
 CODE : LEFT_BRACE .*? RIGHT_BRACE ;
