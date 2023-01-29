@@ -12,6 +12,7 @@ enum class LabSecondGrammarToken(val regex: String, val shouldBeSkipped: Boolean
 	INT("[0-9]+"),
 	ID("[a-zA-Z][a-zA-Z0-9]*"),
 	WS("[ \\n\\t\\r]+", true),
+    EPSILON("ε"),
     END("#");
     
     lateinit var value: String

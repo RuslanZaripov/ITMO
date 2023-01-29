@@ -6,7 +6,9 @@ grammarName: GRAMMAR TOKEN_NAME SEMI;
 
 rules: rule+;
 
-rule: terminalRule | nonTerminalRule;
+rule: terminalRule | nonTerminalRule | typealias;
+
+typealias: TYPEALIAS name=TOKEN_NAME ASSIGN type=TOKEN_NAME code=CODE? SEMI;
 
 terminalRule: TOKEN_NAME COLON REGEX SKIP_MODIFIER? SEMI;
 
@@ -30,11 +32,13 @@ production: TOKEN_NAME ALIAS? CODE? | RULE_NAME ALIAS? ARGS? CODE? | EPSILON COD
 GRAMMAR: 'grammar';
 RETURN: 'return';
 EPSILON: 'EPSILON';
+TYPEALIAS: 'typealias';
 
 OR: '|';
 COLON: ':';
 SEMI: ';';
 COMMA: ',';
+ASSIGN: '=';
 LEFT_SQUARE_BRACKET: '[';
 RIGHT_SQUARE_BRACKET: ']';
 LEFT_PARAN: '(';
@@ -47,7 +51,7 @@ TOKEN_NAME: [A-Z][a-zA-Z_]*;
 ALIAS: [@][a-zA-Z_]+;
 
 ARGS : LEFT_PARAN .*? RIGHT_PARAN ;
-CODE : LEFT_BRACE .*? RIGHT_BRACE ;
+CODE : LEFT_BRACE ( CODE |  ~[{}] )* RIGHT_BRACE ;
 REGEX: '"'.*?'"';
 
 WHITESPACE: [ \t\r\n] -> skip ;

@@ -11,6 +11,7 @@ enum class CalculatorToken(val regex: String, val shouldBeSkipped: Boolean = fal
 	RPAREN("\\)"),
 	NUM("[0-9]+"),
 	WS("[ \\n\\t\\r]+", true),
+    EPSILON("ε"),
     END("#");
     
     lateinit var value: String

@@ -19,6 +19,12 @@ class CalculatorParserTest {
         assertEquals(-4, ast.res)
     }
 
+    @Test
+    fun expr3() {
+        val ast = CalculatorParser(CalculatorLexer("  (  10 / 3) - 10 -2*( 3 * 4-5)  ")).parse()
+        assertEquals(-21, ast.res)
+    }
+
     private fun writeToFile(testName: String, content: String) {
         val file = File(String.format(path, testName))
         file.parentFile.mkdirs()

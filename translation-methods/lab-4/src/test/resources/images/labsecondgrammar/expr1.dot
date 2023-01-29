@@ -1,0 +1,53 @@
+digraph G {
+	0 [label="list", color=brown]
+	1 [label="stmt", color=brown]
+	0 -> 1
+	2 [label="modifier", color=brown]
+	1 -> 2
+	3 [label="val", style=filled, color=green]
+	2 -> 3
+	5 [label="a", style=filled, color=green]
+	1 -> 5
+	7 [label="type", color=brown]
+	1 -> 7
+	8 [label=":", style=filled, color=green]
+	7 -> 8
+	10 [label="Int", style=filled, color=green]
+	7 -> 10
+	12 [label="assignment", color=brown]
+	1 -> 12
+	13 [label="ε", style=filled, color=green]
+	12 -> 13
+	15 [label=";", style=filled, color=green]
+	1 -> 15
+	17 [label="listPrime", color=brown]
+	0 -> 17
+	18 [label="stmt", color=brown]
+	17 -> 18
+	19 [label="modifier", color=brown]
+	18 -> 19
+	20 [label="var", style=filled, color=green]
+	19 -> 20
+	22 [label="a", style=filled, color=green]
+	18 -> 22
+	24 [label="type", color=brown]
+	18 -> 24
+	25 [label=":", style=filled, color=green]
+	24 -> 25
+	27 [label="Int", style=filled, color=green]
+	24 -> 27
+	29 [label="assignment", color=brown]
+	18 -> 29
+	30 [label="=", style=filled, color=green]
+	29 -> 30
+	32 [label="value", color=brown]
+	29 -> 32
+	33 [label="4", style=filled, color=green]
+	32 -> 33
+	35 [label=";", style=filled, color=green]
+	18 -> 35
+	37 [label="listPrime", color=brown]
+	17 -> 37
+	38 [label="ε", style=filled, color=green]
+	37 -> 38
+}

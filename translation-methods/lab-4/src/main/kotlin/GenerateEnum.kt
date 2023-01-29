@@ -16,6 +16,7 @@ class GenerateEnum(private val grammar: Grammar, private val pathToDir: String) 
             #
             #enum class $enumName(val regex: String, val shouldBeSkipped: Boolean = false) { 
             #    ${generateTokensInit()}
+            #    EPSILON("ε"),
             #    END("#");
             #    
             #    lateinit var value: String

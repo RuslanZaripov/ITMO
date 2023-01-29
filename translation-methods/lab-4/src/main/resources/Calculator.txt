@@ -1,45 +1,86 @@
 grammar Calculator;
 
-expr return [Int res]:
-    term
-    exprPrime(term.res!!) {$res = $exprPrime!!.res};
+typealias T = Rational {
+        |class Rational(val numerator: Int, val denominator: Int = 1) {
+        |    operator fun plus(rhs: Rational) =
+        |        numerator.times(rhs.denominator).plus(denominator.times(rhs.numerator))
+        |            .divBy(denominator.times(rhs.denominator))
+        |
+        |    operator fun minus(rhs: Rational) = this.plus(rhs.unaryMinus())
+        |
+        |    operator fun times(rhs: Rational) = numerator.times(rhs.numerator).divBy(denominator.times(rhs.denominator))
+        |
+        |    operator fun div(rhs: Rational) = this.times(Rational(rhs.denominator, rhs.numerator))
+        |
+        |    operator fun unaryMinus() = Rational(-numerator, denominator)
+        |
+        |    override fun toString(): String {
+        |        val r = simplify(this)
+        |        return "${r.numerator}/${r.denominator}"
+        |    }
+        |}
+        |
+        |fun String.toRational(): Rational {
+        |    val number = split("/")
+        |    return when (number.size) {
+        |        1 -> Rational(number[0].toInt())
+        |        else -> Rational(number[0].toInt(), number[1].toInt())
+        |    }
+        |}
+        |
+        |infix fun Int.divBy(rhs: Int) = Rational(this, rhs)
+        |
+        |private fun valueOf(value: String) = value.toRational()
+        |
+        |fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
+        |
+        |fun simplify(r: Rational): Rational {
+        |    val gcd = kotlin.math.abs(gcd(r.numerator, r.denominator))
+        |    return Rational(r.numerator.div(gcd), r.denominator.div(gcd))
+        |}
+        |
+    };
 
-exprPrime [Int acc] return [Int res]:
+expr return [T res]:
+    term
+    exprPrime(term.res) {$res = $exprPrime.res};
+
+exprPrime [T acc] return [T res]:
     exprOp
     term {
-        |if ($exprOp!!.PLUS != null)
-        |    $res = $acc + $term!!.res!!
-        |else if ($exprOp!!.MINUS != null)
-        |    $res = $acc - $term!!.res!!
+        |if ($exprOp.PLUS != null)
+        |    $res = $acc + $term.res
+        |else if ($exprOp.MINUS != null)
+        |    $res = $acc - $term.res
     }
-    exprPrime($res!!) {$res = $exprPrime!!.res}
+    exprPrime($res) {$res = $exprPrime.res}
     | EPSILON {$res = $acc};
 
-term return [Int res]:
+term return [T res]:
     factor
-    termPrime(factor.res!!) {$res = $termPrime!!.res};
+    termPrime(factor.res) {$res = $termPrime.res};
 
-termPrime [Int acc] return [Int res]:
+termPrime [T acc] return [T res]:
     termOp
     factor {
-        |if ($termOp!!.TIMES != null)
-        |   $res = $acc * $factor!!.res!!
-        |else if ($termOp!!.DIVIDE != null)
-        |   $res = $acc / $factor!!.res!!
+        |if ($termOp.TIMES != null)
+        |    $res = $acc * $factor.res
+        |else if ($termOp.DIVIDE != null)
+        |    $res = $acc / $factor.res
     }
-    termPrime($res!!) {$res = $termPrime!!.res}
+    termPrime($res) {$res = $termPrime.res}
     | EPSILON {$res = $acc};
 
-factor return [Int res]:
+factor return [T res]:
     LPAREN
-    expr {$res = $expr!!.res}
+    expr {$res = $expr.res}
     RPAREN
-    | NUM@num {$res = $num!!.value.toInt()}
+    | NUM@num {$res = valueOf($num.value)}
     | exprOp factor {
-        |if ($exprOp!!.PLUS != null)
-        |    $res = $factor!!.res!!
-        |else if ($exprOp!!.MINUS != null)
-        |    $res = -$factor!!.res!!
+        |if ($exprOp.PLUS != null)
+        |    $res = $factor.res
+        |else if ($exprOp.MINUS != null)
+        |    $res = -$factor.res
     };
 
 exprOp: PLUS | MINUS;

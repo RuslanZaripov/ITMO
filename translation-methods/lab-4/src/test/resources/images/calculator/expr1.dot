@@ -1,119 +1,135 @@
 digraph G {
-	0 [label=expr]
-	1 [label=term]
+	0 [label="expr", color=brown]
+	1 [label="term", color=brown]
 	0 -> 1
-	2 [label=factor]
+	2 [label="factor", color=brown]
 	1 -> 2
-	3 [label=LPAREN]
+	3 [label="(", style=filled, color=green]
 	2 -> 3
-	5 [label=expr]
+	5 [label="expr", color=brown]
 	2 -> 5
-	6 [label=term]
+	6 [label="term", color=brown]
 	5 -> 6
-	7 [label=factor]
+	7 [label="factor", color=brown]
 	6 -> 7
-	8 [label=exprOp]
+	8 [label="exprOp", color=brown]
 	7 -> 8
-	9 [label=MINUS]
+	9 [label="-", style=filled, color=green]
 	8 -> 9
-	11 [label=factor]
+	11 [label="factor", color=brown]
 	7 -> 11
-	12 [label=exprOp]
+	12 [label="exprOp", color=brown]
 	11 -> 12
-	13 [label=MINUS]
+	13 [label="-", style=filled, color=green]
 	12 -> 13
-	15 [label=factor]
+	15 [label="factor", color=brown]
 	11 -> 15
-	16 [label=exprOp]
+	16 [label="exprOp", color=brown]
 	15 -> 16
-	17 [label=MINUS]
+	17 [label="-", style=filled, color=green]
 	16 -> 17
-	19 [label=factor]
+	19 [label="factor", color=brown]
 	15 -> 19
-	20 [label=NUM]
+	20 [label="3", style=filled, color=green]
 	19 -> 20
-	22 [label=termPrime]
+	22 [label="termPrime", color=brown]
 	6 -> 22
-	23 [label=termOp]
+	23 [label="termOp", color=brown]
 	22 -> 23
-	24 [label=TIMES]
+	24 [label="*", style=filled, color=green]
 	23 -> 24
-	26 [label=factor]
+	26 [label="factor", color=brown]
 	22 -> 26
-	27 [label=LPAREN]
+	27 [label="(", style=filled, color=green]
 	26 -> 27
-	29 [label=expr]
+	29 [label="expr", color=brown]
 	26 -> 29
-	30 [label=term]
+	30 [label="term", color=brown]
 	29 -> 30
-	31 [label=factor]
+	31 [label="factor", color=brown]
 	30 -> 31
-	32 [label=NUM]
+	32 [label="4", style=filled, color=green]
 	31 -> 32
-	34 [label=termPrime]
+	34 [label="termPrime", color=brown]
 	30 -> 34
-	36 [label=exprPrime]
-	29 -> 36
-	37 [label=exprOp]
-	36 -> 37
-	38 [label=MINUS]
+	35 [label="ε", style=filled, color=green]
+	34 -> 35
+	37 [label="exprPrime", color=brown]
+	29 -> 37
+	38 [label="exprOp", color=brown]
 	37 -> 38
-	40 [label=term]
-	36 -> 40
-	41 [label=factor]
-	40 -> 41
-	42 [label=exprOp]
+	39 [label="-", style=filled, color=green]
+	38 -> 39
+	41 [label="term", color=brown]
+	37 -> 41
+	42 [label="factor", color=brown]
 	41 -> 42
-	43 [label=MINUS]
+	43 [label="exprOp", color=brown]
 	42 -> 43
-	45 [label=factor]
-	41 -> 45
-	46 [label=NUM]
-	45 -> 46
-	48 [label=termPrime]
-	40 -> 48
-	50 [label=exprPrime]
-	36 -> 50
-	52 [label=RPAREN]
-	26 -> 52
-	54 [label=termPrime]
-	22 -> 54
-	56 [label=exprPrime]
-	5 -> 56
-	57 [label=exprOp]
-	56 -> 57
-	58 [label=PLUS]
+	44 [label="-", style=filled, color=green]
+	43 -> 44
+	46 [label="factor", color=brown]
+	42 -> 46
+	47 [label="5", style=filled, color=green]
+	46 -> 47
+	49 [label="termPrime", color=brown]
+	41 -> 49
+	50 [label="ε", style=filled, color=green]
+	49 -> 50
+	52 [label="exprPrime", color=brown]
+	37 -> 52
+	53 [label="ε", style=filled, color=green]
+	52 -> 53
+	55 [label=")", style=filled, color=green]
+	26 -> 55
+	57 [label="termPrime", color=brown]
+	22 -> 57
+	58 [label="ε", style=filled, color=green]
 	57 -> 58
-	60 [label=term]
-	56 -> 60
-	61 [label=factor]
+	60 [label="exprPrime", color=brown]
+	5 -> 60
+	61 [label="exprOp", color=brown]
 	60 -> 61
-	62 [label=NUM]
+	62 [label="+", style=filled, color=green]
 	61 -> 62
-	64 [label=termPrime]
+	64 [label="term", color=brown]
 	60 -> 64
-	66 [label=exprPrime]
-	56 -> 66
-	68 [label=RPAREN]
-	2 -> 68
-	70 [label=termPrime]
-	1 -> 70
-	71 [label=termOp]
-	70 -> 71
-	72 [label=DIVIDE]
+	65 [label="factor", color=brown]
+	64 -> 65
+	66 [label="10", style=filled, color=green]
+	65 -> 66
+	68 [label="termPrime", color=brown]
+	64 -> 68
+	69 [label="ε", style=filled, color=green]
+	68 -> 69
+	71 [label="exprPrime", color=brown]
+	60 -> 71
+	72 [label="ε", style=filled, color=green]
 	71 -> 72
-	74 [label=factor]
-	70 -> 74
-	75 [label=exprOp]
-	74 -> 75
-	76 [label=MINUS]
-	75 -> 76
-	78 [label=factor]
-	74 -> 78
-	79 [label=NUM]
-	78 -> 79
-	81 [label=termPrime]
-	70 -> 81
-	83 [label=exprPrime]
-	0 -> 83
+	74 [label=")", style=filled, color=green]
+	2 -> 74
+	76 [label="termPrime", color=brown]
+	1 -> 76
+	77 [label="termOp", color=brown]
+	76 -> 77
+	78 [label="/", style=filled, color=green]
+	77 -> 78
+	80 [label="factor", color=brown]
+	76 -> 80
+	81 [label="exprOp", color=brown]
+	80 -> 81
+	82 [label="-", style=filled, color=green]
+	81 -> 82
+	84 [label="factor", color=brown]
+	80 -> 84
+	85 [label="2", style=filled, color=green]
+	84 -> 85
+	87 [label="termPrime", color=brown]
+	76 -> 87
+	88 [label="ε", style=filled, color=green]
+	87 -> 88
+	90 [label="exprPrime", color=brown]
+	0 -> 90
+	91 [label="ε", style=filled, color=green]
+	90 -> 91
 }

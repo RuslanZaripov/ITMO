@@ -5,31 +5,10 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker
 typealias RuleName = String
 typealias Alias = String
 typealias RuleNameOrAlias = String
-
-//abstract class Rule(open val name: RuleName)
-//
-//data class Terminal(override val name: RuleName, val regex: String) : Rule(name)
-//
-//data class NonTerminal(override val name: RuleName, val productions: List<RuleName>) : Rule(name)
-
-// sealed class Rule with subclassed Terminal and NonTerminal
-// EPSILON, EOF are terminal rules
-
-// 1.
-// sealed class State()
-// class RuleName(val name: String) : State()
-// object EPSILON : State()
-// object EOF : State()
-
-// 2.
-// EPSILON : Terminal("EPSILON", "")
+typealias Type = String
 
 sealed class Rule {
     abstract val name: RuleName
-}
-
-object EPSILON : Rule() {
-    override val name: RuleName = "EPSILON"
 }
 
 data class Terminal(override val name: RuleName, val regex: String, val shouldBeSkipped: Boolean) : Rule() {
@@ -40,7 +19,7 @@ data class Terminal(override val name: RuleName, val regex: String, val shouldBe
 
 data class NonTerminal(
     override val name: RuleName,
-    val productions: List<Pair<RuleName, Alias?>>,
+    val productions: List<State>,
     val ruleCtx: RuleContext
 ) : Rule() {
     override fun toString(): String {
@@ -55,12 +34,11 @@ data class RuleContext(
     var code: MutableMap<RuleNameOrAlias, String> = mutableMapOf(),
 )
 
-data class Attribute(val name: String, val type: String)
+data class Attribute(val name: String, val type: Type)
 
-// TODO: make sealed class State with subclassed RuleName and Epsilon
-data class Grammar(val name: String?, val rules: List<Rule>) {
-    private val first = mutableMapOf<RuleName, HashSet<RuleName>>()
-    private val follow = mutableMapOf<RuleName, HashSet<RuleName>>()
+data class Grammar(val name: String?, val rules: List<Rule>, val typeAliasMap: MutableMap<String, AliasContext>) {
+    private val first = mutableMapOf<RuleName, HashSet<State>>()
+    private val follow = mutableMapOf<RuleName, HashSet<State>>()
 
     val terminals = rules.filterIsInstance<Terminal>()
     private val nonTerminals = rules.filterIsInstance<NonTerminal>()
@@ -69,35 +47,30 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
     val startNonTerminal = nonTerminals.first()
     val groupRulesByName = rules.groupBy { it.name }
 
-    private val rulesMap = rules.associateBy { it.name }
-    private fun getRuleByName(name: RuleName): Rule {
-        return rulesMap[name] ?: throw IllegalArgumentException("Rule with name $name not found")
-    }
-
-    fun getFirstSet(nonTerminalName: String, productions: List<RuleName>): HashSet<RuleName> {
+    fun getFirstSet(nonTerminalName: String, productions: List<State>): HashSet<State> {
         val firstSet = computeFirstSet(productions)
-        if (firstSet.remove(EPSILON.name)) {
+        if (firstSet.remove(State.EPSILON)) {
             firstSet.addAll(follow[nonTerminalName]!!)
         }
         return firstSet
     }
 
-    private fun computeFirstSet(productions: List<RuleName>): HashSet<RuleName> {
+    private fun computeFirstSet(productions: List<State>): HashSet<State> {
         if (productions.isEmpty()) {
-            return hashSetOf(EPSILON.name)
+            return hashSetOf(State.EPSILON)
         }
 
-        if (productions[0] == EPSILON.name) {
-            return hashSetOf(EPSILON.name)
+        val firstProduction = productions.first()
+        if (firstProduction is State.EPSILON) {
+            return hashSetOf(State.EPSILON)
         }
 
-        val firstRule = getRuleByName(productions[0])
-        if (firstRule is Terminal) {
-            return hashSetOf(firstRule.name)
+        if (firstProduction is State.Terminal) {
+            return hashSetOf(firstProduction)
         }
 
-        val firstTmp = HashSet(first[firstRule.name]!!)
-        if (firstTmp.remove(EPSILON.name)) {
+        val firstTmp = HashSet(first[(firstProduction as State.NonTerminal).name]!!)
+        if (firstTmp.remove(State.EPSILON)) {
             firstTmp.addAll(computeFirstSet(productions.subList(1, productions.size)))
         }
         return firstTmp
@@ -111,9 +84,8 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
             changed = false
             nonTerminals.forEach { nonTerminal ->
                 val firstSet = first[nonTerminal.name]!!
-                val prods = nonTerminal.productions.map { it.first }
-
-                if (firstSet.addAll(computeFirstSet(prods))) {
+                val productions = nonTerminal.productions
+                if (firstSet.addAll(computeFirstSet(productions))) {
                     changed = true
                 }
             }
@@ -128,24 +100,21 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
     fun buildFollow() {
         nonTerminals.forEach { follow.putIfAbsent(it.name, hashSetOf()) }
 
-        follow[startNonTerminal.name]!!.add("END")
+        follow[startNonTerminal.name]!!.add(State.EOF)
 
         var changed = true
         while (changed) {
             changed = false
             nonTerminals.forEach { nonTerminal ->
-                val prods = nonTerminal.productions.map { it.first }
+                val productions = nonTerminal.productions
 
-                prods.forEachIndexed { index, prod ->
-                    if (prod == EPSILON.name) {
-                        return@forEachIndexed
-                    }
-                    if (getRuleByName(prod) is NonTerminal) {
-                        val followTmp = computeFirstSet(prods.subList(index + 1, prods.size))
-                        if (followTmp.remove(EPSILON.name)) {
+                productions.forEachIndexed { index, production ->
+                    if (production is State.NonTerminal) {
+                        val followTmp = computeFirstSet(productions.subList(index + 1, productions.size))
+                        if (followTmp.remove(State.EPSILON)) {
                             followTmp.addAll(follow[nonTerminal.name]!!)
                         }
-                        if (follow[prod]!!.addAll(followTmp)) {
+                        if (follow[production.name]!!.addAll(followTmp)) {
                             changed = true
                         }
                     }
@@ -165,9 +134,13 @@ data class Grammar(val name: String?, val rules: List<Rule>) {
 }
 
 sealed class State {
-    class RuleName(val name: String, val alias: String) : State()
+    data class Terminal(val name: RuleName, val alias: Alias?) : State()
+    data class NonTerminal(val name: RuleName, val alias: Alias?) : State()
     object EPSILON : State()
+    object EOF : State()
 }
+
+data class AliasContext(val type: String, val code: String)
 
 object GrammarBuilder {
     fun build(grammarPath: String): Grammar {
@@ -177,12 +150,17 @@ object GrammarBuilder {
         val listener = Listener()
         val walker = ParseTreeWalker()
         walker.walk(listener, parsedTree)
-        return Grammar(listener.grammarName, listener.rules)
+        return Grammar(
+            listener.grammarName,
+            listener.rules,
+            listener.typeAliasMap
+        )
     }
 
     private class Listener : GrammarBaseListener() {
         var grammarName: String? = null
         val rules = mutableListOf<Rule>()
+        val typeAliasMap = mutableMapOf<String, AliasContext>()
 
         override fun exitTerminalRule(ctx: GrammarParser.TerminalRuleContext) {
             val shouldBeSkipped = ctx.SKIP_MODIFIER() != null
@@ -198,23 +176,45 @@ object GrammarBuilder {
                 Attribute(it.RULE_NAME().text, it.TOKEN_NAME().text)
             }
             ctx.alternatives().alternative().forEach { alter ->
-                val productions = alter.production().map { it.getChild(0).text to it.ALIAS()?.text?.drop(1) }
-                for (productionContext in alter.production()) {
-                    val name = if (productionContext.ALIAS() != null) productionContext.ALIAS().text.drop(1) else productionContext.getChild(0).text
-                    if (productionContext.ARGS() != null) {
-                        ruleCtx.initCode[name] = productionContext.ARGS().text
+                val productions = mutableListOf<State>()
+                for (productionCtx in alter.production()) {
+                    val ruleName = productionCtx.getChild(0).text
+                    val ruleAlias = productionCtx.ALIAS()?.text?.drop(1)
+
+                    if (ruleName == "EPSILON") {
+                        productions.add(State.EPSILON)
+                    } else if (ruleName.isUpper()) {
+                        productions.add(State.Terminal(ruleName, ruleAlias))
+                    } else {
+                        productions.add(State.NonTerminal(ruleName, ruleAlias))
                     }
-                    if (productionContext.CODE() != null) {
-                        ruleCtx.code[name] = productionContext.CODE().text
+
+                    val associateName = ruleAlias ?: ruleName
+
+                    productionCtx.ARGS()?.let { args ->
+                        ruleCtx.initCode[associateName] = args.text
+                    }
+                    productionCtx.CODE()?.let { code ->
+                        ruleCtx.code[associateName] = code.text
                     }
                 }
-                println(ctx.RULE_NAME().text + " " + productions + " " + ruleCtx)
+
+//                println(ctx.RULE_NAME().text + " " + productions + " " + ruleCtx)
+
                 rules.add(NonTerminal(ctx.RULE_NAME().text, productions, ruleCtx))
             }
         }
 
         override fun exitGrammarName(ctx: GrammarParser.GrammarNameContext) {
             grammarName = ctx.TOKEN_NAME().text
+        }
+
+        override fun exitTypealias(ctx: GrammarParser.TypealiasContext) {
+            typeAliasMap[ctx.name.text] = AliasContext(ctx.type.text, ctx.code.text)
+        }
+
+        private fun String.isUpper(): Boolean {
+            return this.all { it.isUpperCase() }
         }
     }
 }

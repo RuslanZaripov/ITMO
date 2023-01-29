@@ -15,6 +15,8 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
         val sourceCode = """
             |package $prefixPackageName
             |
+            |import kotlin.properties.Delegates
+            |
             |class Visualizer {
             |    private var index = 0
             |
@@ -26,7 +28,7 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
             |    }
             |
             |    private fun traverse(tree: Tree, parentId: Int, currentId: Int, sb: StringBuilder) {
-            |        sb.append("\t${'$'}currentId [label=${'$'}{tree.name}]\n")
+            |        sb.append("\t${'$'}currentId [${'$'}{formatNode(tree)}]\n")
             |        if (parentId != -1) {
             |            sb.append("\t${'$'}parentId -> ${'$'}currentId\n")
             |        }
@@ -37,6 +39,13 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
             |            }
             |        } else {
             |            index += 1
+            |        }
+            |    }
+            |    
+            |    private fun formatNode(tree: Tree): String {
+            |        return when(tree) {
+            |            is Leaf -> "label=\"${'$'}{tree.value}\", style=filled, color=green"
+            |            else -> "label=\"${'$'}{tree.name}\", color=brown"
             |        }
             |    }
             |}
@@ -102,15 +111,22 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
             |${generateMethods()}
             |}
             |
+            |${addCode(grammar.typeAliasMap)}
+            |
         """.trimMargin("|")
         File(path).parentFile.mkdirs()
         File(path).writeText(sourceCode)
     }
 
+    private fun addCode(typeAliasMap: MutableMap<String, AliasContext>): String {
+        return typeAliasMap.toList().joinToString(separator = "\n") { ctx -> ctx.second.code.drop(1).dropLast(1) }
+            .trimMargin("|")
+    }
+
     private fun generateMethods() = grammar.allNonTerminalNames.joinToString(separator = "\n") { generateMethod(it) }
 
     private fun generateContexts() = grammar.allNonTerminalNames.joinToString(
-        separator = "\n"
+        separator = "\n\n"
     ) {
         """
             |class ${capitalize(it.name)}Context(name: String${setAttrs(it, requireTypes = true)}) : Tree(name) {
@@ -127,25 +143,28 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
     }
 
     private fun generateReturnAttrs(rule: NonTerminal) =
-        rule.ruleCtx.returnAttrs?.let { it.joinToString(separator = "\n") { attr -> "var ${attr.name}: ${attr.type}? = null" } }
+        rule.ruleCtx.returnAttrs?.let { it.joinToString(separator = "\n") { attr -> formatAlias("var ${attr.name} by Delegates.notNull<${attr.type}>()") } }
             ?: "/* no return attrs */"
 
 
     private fun generateContext(rule: NonTerminal) =
         grammar.groupRulesByName[rule.name]?.joinToString(separator = "\n") { alter ->
-            (alter as NonTerminal).productions.filter { it.first != "EPSILON" }
-                .joinToString(separator = "\n") { (production, alias) ->
-                    if (production.isUpper()) {
-                        "var ${getAliasOrProd(alias, production)}: $enumName? = null"
-                    } else {
-                        "var ${getAliasOrProd(alias, production)}: ${capitalize(production)}Context? = null"
+            (alter as NonTerminal).productions
+                .joinToString(separator = "\n") { state ->
+                    when (state) {
+                        is State.Terminal -> state.alias?.let {
+                            "lateinit var ${state.alias}: $enumName"
+                        } ?: "var ${state.name}: $enumName? = null"
+
+                        is State.NonTerminal ->
+                            "lateinit var ${state.alias ?: state.name}: ${capitalize(state.name)}Context"
+
+                        State.EPSILON -> "/* context ${rule.name} can be epsilon */"
+
+                        else -> throw Exception("Unspecified state $state found while generating context class for ${rule.name}")
                     }
                 }
         } ?: "/* no need in context class for ${rule.name} */"
-
-    private fun getAliasOrProd(alias: String?, prod: String): String {
-        return alias ?: prod
-    }
 
     private fun generateMethod(rule: NonTerminal): String {
         val ctxName = "${rule.name}LocalContext"
@@ -155,7 +174,7 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
             |    var lastToken: $enumName
             |    
             |    when (curToken) {
-            |${generateBranches(rule.name, ctxName)}
+            |${generateBranches(rule.name, ctxName).plus("\n")}
             |        else -> {
             |            println("Tree: \n${"$"}$ctxName")
             |            throw Exception("Unexpected token: ${'$'}curToken")
@@ -170,11 +189,17 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
     private fun setAttrs(rule: NonTerminal, requireTypes: Boolean): String {
         return rule.ruleCtx.attrs?.joinToString(prefix = ", ", separator = ", ") {
             if (requireTypes) {
-                "val ${it.name}: ${it.type}"
+                formatAlias("val ${it.name}: ${it.type}")
             } else {
                 it.name
             }
         } ?: " /* no input attrs */"
+    }
+
+    private fun formatAlias(s: String): String {
+        var result = s
+        grammar.typeAliasMap.forEach { ctx -> result = result.replace(ctx.key, ctx.value.type) }
+        return result
     }
 
     private fun generateArgs(rule: NonTerminal): String {
@@ -182,48 +207,65 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
             prefix = "(",
             separator = ", ",
             postfix = ")"
-        ) { arg -> "${arg.name}: ${arg.type}" } ?: "()"
+        ) { arg -> formatAlias("${arg.name}: ${arg.type}") } ?: "()"
     }
 
     private fun generateBranches(ruleName: String, ctxName: String): String {
-        return grammar.groupRulesByName[ruleName]!!.filterIsInstance<NonTerminal>().joinToString("\n") { alter ->
-            val firstSet = grammar.getFirstSet(ruleName, alter.productions.map { it.first })
-            val cond = firstSet.joinToString(", ") { "$enumName.$it" }
-            val body = alter.productions.joinToString("\n") { (prod, alias) ->
-                val treeName: String
-                if (prod == "EPSILON") {
-                    val action = alter.ruleCtx.code[prod]
-                    if (action != null) return@joinToString formatAction(action, ctxName)
-                    return@joinToString "/* do nothing */"
+        return grammar.groupRulesByName[ruleName]!!.filterIsInstance<NonTerminal>().joinToString("\n\n") { alter ->
+            val firstSet = grammar.getFirstSet(ruleName, alter.productions)
+            val cond = firstSet.joinToString(", ") {
+                "$enumName.${
+                    when (it) {
+                        is State.EOF -> "END"
+                        is State.NonTerminal -> it.name
+                        is State.Terminal -> it.name
+                        else -> throw Exception("first set of $ruleName contains unspecified state")
+                    }
+                }"
+            }
+            val body = alter.productions.joinToString("\n\n") { state ->
+                when (state) {
+                    is State.Terminal -> {
+                        val actualName = state.name
+                        val pseudoName = state.alias ?: actualName
+                        val scopeNonTerminalVarName = "lastToken"
+                        val astAddition = "Leaf($scopeNonTerminalVarName, $scopeNonTerminalVarName.value)"
+                        val action = alter.ruleCtx.code[pseudoName]
+                        """
+                            |$scopeNonTerminalVarName = check($enumName.$actualName)
+                            |$ctxName.$pseudoName = $scopeNonTerminalVarName
+                            |${formatAction(action, ctxName)}
+                            |$ctxName.add($astAddition)
+                        """.trimMargin("|")
+                    }
+
+                    is State.NonTerminal -> {
+                        val actualName = state.name // actualName is a method name (a.k.a. non-terminal name)
+                        val pseudoName = state.alias ?: actualName // aliasing in case of many same non-terminals name
+                        val scopeNonTerminalVarName: String = pseudoName // received after production performed
+                        val astAddition: String =
+                            scopeNonTerminalVarName // what will be added to the tree representation
+                        val initializationCode = alter.ruleCtx.initCode[pseudoName]
+                        val action = alter.ruleCtx.code[pseudoName]
+                        """
+                            |val $scopeNonTerminalVarName = $actualName${getArgs(initializationCode, ctxName)}
+                            |$ctxName.$pseudoName = $scopeNonTerminalVarName
+                            |${formatAction(action, ctxName)}
+                            |$ctxName.add($astAddition)
+                        """.trimMargin("|")
+                    }
+
+                    State.EPSILON -> {
+                        val astAddition = "Leaf($enumName.EPSILON, \"ε\")"
+                        val action = alter.ruleCtx.code["EPSILON"]
+                        """
+                            |${formatAction(action, ctxName)}
+                            |$ctxName.add($astAddition)
+                        """.trimMargin("|")
+                    }
+
+                    else -> throw Exception("Unspecified state $state found while generating branch for $ruleName")
                 }
-                if (prod.isUpper()) {
-                    treeName = "Leaf(lastToken, lastToken.value)"
-                    val alias = getAliasOrProd(alias, prod)
-
-                    var code = "lastToken = check($enumName.$prod)"
-
-                    code += "\n$ctxName.$alias = lastToken"
-
-                    val action = alter.ruleCtx.code[alias]
-                    if (action != null) code += "\n${formatAction(action, ctxName)}"
-
-                    code
-                } else {
-                    // aliasing
-                    treeName = getAliasOrProd(alias, prod) // variable name in case of many same production
-                    // prod is a method name (a.k.a. non-terminal)
-
-                    var code = "val $treeName = $prod${getArgs(alter, treeName, ctxName)}"
-
-                    code += "\n$ctxName.$treeName = $treeName"
-
-                    val action = alter.ruleCtx.code[treeName]
-                    if (action != null) code += "\n${formatAction(action, ctxName)}"
-
-                    code
-                }
-                    .plus("\n${ctxName}.add($treeName)")
-                    .plus("\n")
 
             }.prependIndent("\t")
             """
@@ -234,12 +276,14 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
         }
     }
 
-    private fun getArgs(alter: NonTerminal, prod: RuleName, ctxName: String) =
-        alter.ruleCtx.initCode[prod]?.replace("$", "$ctxName.") ?: "()"
+    private fun getArgs(initializationCode: String?, ctxName: String) =
+        initializationCode?.let { addContextName(it, ctxName) } ?: "()"
 
-    private fun formatAction(action: String, ctxName: String): String {
-        return action.replace("$", "$ctxName.").drop(1).dropLast(1).trimMargin("|")
-    }
+    private fun formatAction(action: String?, ctxName: String): String =
+        action?.let { addContextName(action, ctxName) }?.drop(1)?.dropLast(1)?.trimMargin("|")
+            ?: "/* no action performed on attributes for $ctxName */"
+
+    private fun addContextName(action: String, ctxName: String) = action.replace("$", "$ctxName.")
 
     private fun capitalize(name: String): String {
         return name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
