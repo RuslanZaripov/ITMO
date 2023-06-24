@@ -1,5 +1,7 @@
+#![allow(dead_code)]
 use std::f64::consts::PI;
 use image::{ImageBuffer, Rgb};
+use indicatif::{ProgressIterator, ProgressStyle};
 
 use crate::camera::Camera;
 use crate::equation::QuadraticEquation;
@@ -24,7 +26,7 @@ pub mod texture;
 pub mod plane;
 pub mod aabb;
 
-#[allow(unused_variables, dead_code)]
+#[allow(unused_variables)]
 fn main() {
     let ratio = 16.0 / 9.0;
     let width = 7500;
@@ -120,7 +122,12 @@ pub fn render(image: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
               max_depth: &u32,
 ) {
     let (width, height) = image.dimensions();
-    for (i, j, pixel) in image.enumerate_pixels_mut() {
+
+    let pb_style =  ProgressStyle::with_template(
+        "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] ({pos}/{len}, ETA {eta})",
+    ).unwrap();
+
+    for (i, j, pixel) in image.enumerate_pixels_mut().progress().with_style(pb_style) {
         let mut color_pixel = BLACK;
         for _ in 0..*samples_per_pixel {
             let u = (i as f64 + get_random_double()) / (width - 1) as f64;
