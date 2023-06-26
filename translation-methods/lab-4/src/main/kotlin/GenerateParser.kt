@@ -1,7 +1,7 @@
 import java.io.File
 import java.util.*
 
-class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
+class GenerateParser(val grammar: Grammar, pathToDir: String) {
     private val prefixPackageName = "gen.${grammar.name?.lowercase(Locale.getDefault())}"
     private val prefixPath = prefixPackageName.replace(".", "/")
 
@@ -143,7 +143,8 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
     }
 
     private fun generateReturnAttrs(rule: NonTerminal) =
-        rule.ruleCtx.returnAttrs?.let { it.joinToString(separator = "\n") { attr -> formatAlias("var ${attr.name} by Delegates.notNull<${attr.type}>()") } }
+        rule.ruleCtx.returnAttrs
+            ?.let { it.joinToString(separator = "\n") { attr -> formatAlias("var ${attr.name} by Delegates.notNull<${attr.type}>()") } }
             ?: "/* no return attrs */"
 
 
@@ -167,20 +168,22 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
         } ?: "/* no need in context class for ${rule.name} */"
 
     private fun generateMethod(rule: NonTerminal): String {
-        val ctxName = "${rule.name}LocalContext"
+        val ruleName = rule.name
+        val localContextName = "${ruleName}LocalContext"
+
         return """
-            |private fun ${rule.name}${generateArgs(rule)}: ${capitalize(rule.name)}Context {
-            |    val $ctxName = ${capitalize(rule.name)}Context("${rule.name}"${setAttrs(rule, requireTypes = false)})
+            |private fun $ruleName${generateArgs(rule)}: ${capitalize(ruleName)}Context {
+            |    val $localContextName = ${capitalize(ruleName)}Context("$ruleName"${setAttrs(rule, requireTypes = false)})
             |    var lastToken: $enumName
             |    
             |    when (curToken) {
-            |${generateBranches(rule.name, ctxName).plus("\n")}
+            |${generateBranches(ruleName, localContextName).plus("\n")}
             |        else -> {
-            |            println("Tree: \n${"$"}$ctxName")
+            |            println("Tree: \n${"$"}$localContextName")
             |            throw Exception("Unexpected token: ${'$'}curToken")
             |        }
             |    }
-            |    return $ctxName
+            |    return $localContextName
             |}
             |
         """.trimMargin("|").prependIndent("\t")
@@ -207,7 +210,8 @@ class GenerateParser(val grammar: Grammar, private val pathToDir: String) {
             prefix = "(",
             separator = ", ",
             postfix = ")"
-        ) { arg -> formatAlias("${arg.name}: ${arg.type}") } ?: "()"
+        ) { arg -> formatAlias("${arg.name}: ${arg.type}") }
+            ?: "()"
     }
 
     private fun generateBranches(ruleName: String, ctxName: String): String {
