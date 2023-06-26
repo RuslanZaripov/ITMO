@@ -1,0 +1,72 @@
+grammar Calculator;
+
+typealias T = Double {
+        |private fun valueOf(value: String) = value.toDouble()
+    };
+
+expr return [T res]:
+    term
+    exprPrime(term.res) {$res = $exprPrime.res};
+
+exprPrime [T acc] return [T res]:
+    exprOp
+    term {
+        |if ($exprOp.PLUS != null)
+        |    $res = $acc + $term.res
+        |else if ($exprOp.MINUS != null)
+        |    $res = $acc - $term.res
+    }
+    exprPrime($res) {$res = $exprPrime.res}
+    | EPSILON {$res = $acc};
+
+term return [T res]:
+    powExpr
+    termPrime(powExpr.res) {$res = $termPrime.res};
+
+termPrime [T acc] return [T res]:
+    termOp
+    powExpr {
+        |if ($termOp.TIMES != null)
+        |    $res = $acc * $powExpr.res
+        |else if ($termOp.DIVIDE != null)
+        |    $res = $acc / $powExpr.res
+    }
+    termPrime($res) {$res = $termPrime.res}
+    | EPSILON {$res = $acc};
+
+powExpr return [T res]:
+    factor
+    powPrime($factor.res) {$res = $powPrime.res};
+
+powPrime [T acc] return [T res]:
+    DEGREE
+    factor
+    powPrime($factor.res) {
+       |$res = $acc.pow($powPrime.res)
+    }
+    | EPSILON {$res = $acc};
+
+factor return [T res]:
+    LPAREN
+    expr {$res = $expr.res}
+    RPAREN
+    | NUM@num {$res = valueOf($num.value)}
+    | exprOp factor {
+        |if ($exprOp.PLUS != null)
+        |    $res = $factor.res
+        |else if ($exprOp.MINUS != null)
+        |    $res = -$factor.res
+    };
+
+exprOp: PLUS | MINUS;
+termOp: TIMES | DIVIDE;
+
+PLUS: "\\+";
+MINUS: "-";
+DEGREE: "\\*\\*";
+TIMES: "\\*";
+DIVIDE: "/";
+LPAREN: "\\(";
+RPAREN: "\\)";
+NUM: "[0-9]+";
+WS: "[ \\n\\t\\r]+" -> skip;
