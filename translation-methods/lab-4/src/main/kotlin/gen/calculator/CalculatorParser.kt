@@ -1,6 +1,7 @@
 package gen.calculator
 
 import kotlin.properties.Delegates
+import kotlin.math.pow
 
 class Visualizer {
     private var index = 0
@@ -192,6 +193,8 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 			}
 	
 			CalculatorToken.RPAREN, CalculatorToken.END -> {
+				/* no initialization performed for EPSILON */
+				/* no context filling for EPSILON */
 				exprPrimeLocalContext.res = exprPrimeLocalContext.acc
 				exprPrimeLocalContext.add(Leaf(CalculatorToken.EPSILON, "ε"))
 			}
@@ -255,6 +258,8 @@ class CalculatorParser(private val lexer: CalculatorLexer) {
 			}
 	
 			CalculatorToken.END, CalculatorToken.RPAREN, CalculatorToken.PLUS, CalculatorToken.MINUS -> {
+				/* no initialization performed for EPSILON */
+				/* no context filling for EPSILON */
 				termPrimeLocalContext.res = termPrimeLocalContext.acc
 				termPrimeLocalContext.add(Leaf(CalculatorToken.EPSILON, "ε"))
 			}
@@ -392,6 +397,19 @@ class Rational(val numerator: Int, val denominator: Int = 1) {
         val r = simplify(this)
         return "${r.numerator}/${r.denominator}"
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Rational) return false
+
+        val thisSimplified = simplify(this)
+        val otherSimplified = simplify(other)
+
+        if (thisSimplified.numerator != otherSimplified.numerator) return false
+        if (thisSimplified.denominator != otherSimplified.denominator) return false
+
+        return true
+    }
 }
 
 fun String.toRational(): Rational {
@@ -402,6 +420,10 @@ fun String.toRational(): Rational {
     }
 }
 
+fun Rational.toDouble(): Double {
+    return numerator.toDouble() / denominator
+}
+
 infix fun Int.divBy(rhs: Int) = Rational(this, rhs)
 
 private fun valueOf(value: String) = value.toRational()
@@ -409,7 +431,10 @@ private fun valueOf(value: String) = value.toRational()
 fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
 
 fun simplify(r: Rational): Rational {
+    val isNegative = (r.numerator < 0).xor(r.denominator < 0)
     val gcd = kotlin.math.abs(gcd(r.numerator, r.denominator))
-    return Rational(r.numerator.div(gcd), r.denominator.div(gcd))
+    val tempNumerator = kotlin.math.abs(r.numerator).div(gcd)
+    val newDenominator = kotlin.math.abs(r.denominator).div(gcd)
+    return Rational(if (isNegative) -tempNumerator else tempNumerator, newDenominator)
 }
 

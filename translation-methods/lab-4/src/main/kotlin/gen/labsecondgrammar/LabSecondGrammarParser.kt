@@ -180,6 +180,8 @@ class LabSecondGrammarParser(private val lexer: LabSecondGrammarLexer) {
 			}
 	
 			LabSecondGrammarToken.END -> {
+				/* no initialization performed for EPSILON */
+				/* no context filling for EPSILON */
 				/* no action performed on attributes for listPrimeLocalContext */
 				listPrimeLocalContext.add(Leaf(LabSecondGrammarToken.EPSILON, "ε"))
 			}
@@ -302,6 +304,8 @@ class LabSecondGrammarParser(private val lexer: LabSecondGrammarLexer) {
 			}
 	
 			LabSecondGrammarToken.SEMICOLON -> {
+				/* no initialization performed for EPSILON */
+				/* no context filling for EPSILON */
 				/* no action performed on attributes for assignmentLocalContext */
 				assignmentLocalContext.add(Leaf(LabSecondGrammarToken.EPSILON, "ε"))
 			}
@@ -334,6 +338,6 @@ class LabSecondGrammarParser(private val lexer: LabSecondGrammarLexer) {
 	    return valueLocalContext
 	}
 	
-
-	
 }
+
+

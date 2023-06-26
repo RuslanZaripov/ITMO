@@ -10,19 +10,26 @@ class CalculatorParserTest {
     @Test
     fun expr1() {
         val ast = CalculatorParser(CalculatorLexer("(---3*(4--5)+10)/-2")).parse()
-        assertEquals(8, ast.res)
+        assertEquals(17 divBy 2, ast.res)
         writeToFile("expr1", Visualizer().visualize(ast))
     }
+
     @Test
     fun expr2() {
         val ast = CalculatorParser(CalculatorLexer("10-2*(3*4-5)")).parse()
-        assertEquals(-4, ast.res)
+        assertEquals(-4 divBy 1, ast.res)
     }
 
     @Test
     fun expr3() {
         val ast = CalculatorParser(CalculatorLexer("  (  10 / 3) - 10 -2*( 3 * 4-5)  ")).parse()
-        assertEquals(-21, ast.res)
+        assertEquals(-62 divBy 3, ast.res)
+    }
+
+    @Test
+    fun expr4() {
+        val ast = CalculatorParser(CalculatorLexer("  (  10 / 3) - (5/ 2)  ")).parse()
+        assertEquals(5 divBy 6, ast.res)
     }
 
     private fun writeToFile(testName: String, content: String) {
