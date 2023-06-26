@@ -5,3 +5,5 @@ data
 backup
 test
 image
+images
+__pycache__
