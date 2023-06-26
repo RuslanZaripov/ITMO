@@ -16,6 +16,7 @@ class GenerateParser(val grammar: Grammar, pathToDir: String) {
             |package $prefixPackageName
             |
             |import kotlin.properties.Delegates
+            |import kotlin.math.pow
             |
             |class Visualizer {
             |    private var index = 0
@@ -216,68 +217,33 @@ class GenerateParser(val grammar: Grammar, pathToDir: String) {
 
     private fun generateBranches(ruleName: String, ctxName: String): String {
         return grammar.groupRulesByName[ruleName]!!.filterIsInstance<NonTerminal>().joinToString("\n\n") { alter ->
+
             val firstSet = grammar.getFirstSet(ruleName, alter.productions)
-            val cond = firstSet.joinToString(", ") {
-                "$enumName.${
-                    when (it) {
-                        is State.EOF -> "END"
-                        is State.NonTerminal -> it.name
-                        is State.Terminal -> it.name
-                        else -> throw Exception("first set of $ruleName contains unspecified state")
-                    }
-                }"
-            }
+
+            val cond = firstSet.joinToString(", ") { state -> "$enumName.${tokenName(state, ruleName)}" }
+
             val body = alter.productions.joinToString("\n\n") { state ->
                 when (state) {
-                    is State.Terminal -> {
-                        val actualName = state.name
-                        val pseudoName = state.alias ?: actualName
-                        val scopeNonTerminalVarName = "lastToken"
-                        val astAddition = "Leaf($scopeNonTerminalVarName, $scopeNonTerminalVarName.value)"
-                        val action = alter.ruleCtx.code[pseudoName]
-                        """
-                            |$scopeNonTerminalVarName = check($enumName.$actualName)
-                            |$ctxName.$pseudoName = $scopeNonTerminalVarName
-                            |${formatAction(action, ctxName)}
-                            |$ctxName.add($astAddition)
-                        """.trimMargin("|")
-                    }
-
-                    is State.NonTerminal -> {
-                        val actualName = state.name // actualName is a method name (a.k.a. non-terminal name)
-                        val pseudoName = state.alias ?: actualName // aliasing in case of many same non-terminals name
-                        val scopeNonTerminalVarName: String = pseudoName // received after production performed
-                        val astAddition: String =
-                            scopeNonTerminalVarName // what will be added to the tree representation
-                        val initializationCode = alter.ruleCtx.initCode[pseudoName]
-                        val action = alter.ruleCtx.code[pseudoName]
-                        """
-                            |val $scopeNonTerminalVarName = $actualName${getArgs(initializationCode, ctxName)}
-                            |$ctxName.$pseudoName = $scopeNonTerminalVarName
-                            |${formatAction(action, ctxName)}
-                            |$ctxName.add($astAddition)
-                        """.trimMargin("|")
-                    }
-
-                    State.EPSILON -> {
-                        val astAddition = "Leaf($enumName.EPSILON, \"ε\")"
-                        val action = alter.ruleCtx.code["EPSILON"]
-                        """
-                            |${formatAction(action, ctxName)}
-                            |$ctxName.add($astAddition)
-                        """.trimMargin("|")
-                    }
-
+                    is State.Terminal -> TerminalCodeGenerator(state, enumName, alter, ctxName).generateCode()
+                    is State.NonTerminal -> NonTerminalCodeGenerator(state, alter, ctxName).generateCode()
+                    State.EPSILON -> EpsilonCodeGenerator(enumName, alter, ctxName).generateCode()
                     else -> throw Exception("Unspecified state $state found while generating branch for $ruleName")
                 }
-
             }.prependIndent("\t")
+
             """
             |$cond -> {
             |$body
             |}
             """.trimMargin("|").prependIndent("\t\t")
         }
+    }
+
+    private fun tokenName(it: State, ruleName: String) = when (it) {
+        is State.EOF -> "END"
+        is State.NonTerminal -> it.name
+        is State.Terminal -> it.name
+        else -> throw Exception("first set of $ruleName contains unspecified state")
     }
 
     private fun getArgs(initializationCode: String?, ctxName: String) =

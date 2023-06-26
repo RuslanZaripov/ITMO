@@ -20,7 +20,7 @@ data class Terminal(override val name: RuleName, val regex: String, val shouldBe
 data class NonTerminal(
     override val name: RuleName,
     val productions: List<State>,
-    val ruleCtx: RuleContext
+    val ruleCtx: RuleContext,
 ) : Rule() {
     override fun toString(): String {
         return "$name: ${productions.joinToString(" ")}"
@@ -30,8 +30,8 @@ data class NonTerminal(
 data class RuleContext(
     var attrs: List<Attribute>? = null,
     var returnAttrs: List<Attribute>? = null,
-    var initCode: MutableMap<RuleNameOrAlias, String> = mutableMapOf(),
-    var code: MutableMap<RuleNameOrAlias, String> = mutableMapOf(),
+    var ctorArgs: MutableMap<RuleNameOrAlias, String> = mutableMapOf(),
+    var action: MutableMap<RuleNameOrAlias, String> = mutableMapOf(),
 )
 
 data class Attribute(val name: String, val type: Type)
@@ -91,10 +91,10 @@ data class Grammar(val name: String?, val rules: List<Rule>, val typeAliasMap: M
             }
         }
 
-        println("\nFIRST:")
-        first.forEach { (ruleName, firstSet) ->
-            print("$ruleName -> $firstSet\n")
-        }
+//        println("\nFIRST:")
+//        first.forEach { (ruleName, firstSet) ->
+//            print("$ruleName -> $firstSet\n")
+//        }
     }
 
     fun buildFollow() {
@@ -122,10 +122,10 @@ data class Grammar(val name: String?, val rules: List<Rule>, val typeAliasMap: M
             }
         }
 
-        println("\nFOLLOW:")
-        follow.forEach { (ruleName, followSet) ->
-            print("$ruleName -> $followSet\n")
-        }
+//        println("\nFOLLOW:")
+//        follow.forEach { (ruleName, followSet) ->
+//            print("$ruleName -> $followSet\n")
+//        }
     }
 
     override fun toString(): String {
@@ -192,10 +192,10 @@ object GrammarBuilder {
                     val associateName = ruleAlias ?: ruleName
 
                     productionCtx.ARGS()?.let { args ->
-                        ruleCtx.initCode[associateName] = args.text
+                        ruleCtx.ctorArgs[associateName] = args.text
                     }
                     productionCtx.CODE()?.let { code ->
-                        ruleCtx.code[associateName] = code.text
+                        ruleCtx.action[associateName] = code.text
                     }
                 }
 
